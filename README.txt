@@ -2,15 +2,11 @@ require python-twitter and pytz module
 
 execute  TOE.py 
 
-twitter associate :  pseudo : RivGeralt
-					 password : thewitcher2  
-
-
 necessary environment variable :
-					CONSUMER_KEY=CgX2BuHNH29VlBBzyepCA2PG6
-					CONSUMER_SECRET=utmpLerFVNkOV0ZC3CkGA8M3ND0akCa4TbSYCg5ekGx9GihCRQ
-					ACCES_TOKEN_SECRET=rpZvwHJ5r2kMunt9dqaktbAG4JncMpTW0Z9oEduwb75Ma
-					ACCES_TOKEN_KEY=2583918630-f4jNfYIKG34nY1lI1ffeh5gqWeSXxO4yVPooGgO
+					CONSUMER_KEY
+					CONSUMER_SECRET
+					ACCES_TOKEN_SECRET
+					ACCES_TOKEN_KEY
 
 
 exit error :
