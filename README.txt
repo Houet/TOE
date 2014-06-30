@@ -2,9 +2,6 @@ require python-twitter and pytz module
 
 execute  TOE.py 
 
-twitter associate :  pseudo : RivGeralt
-					 password : thewitcher2  
-
 
 necessary environment variable :
 					CONSUMER_KEY=CgX2BuHNH29VlBBzyepCA2PG6
