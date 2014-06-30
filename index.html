@@ -1,0 +1,79 @@
+<!DOCTYPE html>
+<html>
+
+  <head>
+    <meta charset='utf-8' />
+    <meta http-equiv="X-UA-Compatible" content="chrome=1" />
+    <meta name="description" content="Toe : " />
+
+    <link rel="stylesheet" type="text/css" media="screen" href="stylesheets/stylesheet.css">
+
+    <title>Toe</title>
+  </head>
+
+  <body>
+
+    <!-- HEADER -->
+    <div id="header_wrap" class="outer">
+        <header class="inner">
+          <a id="forkme_banner" href="https://github.com/Houet/TOE">View on GitHub</a>
+
+          <h1 id="project_title">Toe</h1>
+          <h2 id="project_tagline"></h2>
+
+            <section id="downloads">
+              <a class="zip_download_link" href="https://github.com/Houet/TOE/zipball/master">Download this project as a .zip file</a>
+              <a class="tar_download_link" href="https://github.com/Houet/TOE/tarball/master">Download this project as a tar.gz file</a>
+            </section>
+        </header>
+    </div>
+
+    <!-- MAIN CONTENT -->
+    <div id="main_content_wrap" class="outer">
+      <section id="main_content" class="inner">
+        <h3>
+<a name="require" class="anchor" href="#require"><span class="octicon octicon-link"></span></a>require</h3>
+
+<p>python-twitter and pytz module</p>
+
+<p>execute  TOE.py </p>
+
+<h3>
+<a name="necessary-environment-variable-" class="anchor" href="#necessary-environment-variable-"><span class="octicon octicon-link"></span></a>necessary environment variable :</h3>
+
+<ul>
+<li>CONSUMER_KEY</li>
+<li>CONSUMER_SECRET</li>
+<li>ACCES_TOKEN_SECRET</li>
+<li>ACCES_TOKEN_KEY</li>
+</ul><h3>
+<a name="exit-error-" class="anchor" href="#exit-error-"><span class="octicon octicon-link"></span></a>exit error :</h3>
+
+<p>1 -&gt; no environment value 
+2 -&gt; wrong environment value for twitter (not working)</p>
+
+<h3>
+<a name="working-" class="anchor" href="#working-"><span class="octicon octicon-link"></span></a>working :</h3>
+
+<p>the programm looks for the last "good" tweet ,ie the last earthquake published, 
+catches the date and looks for every later event 
+if the event is already published, it checks the associate url and 
+detained from duplicate
+if the last event published is not accessible 
+for a special reason (too deep in the history , bug, ... )
+it looks for the last tweet date and publish later event </p>
+      </section>
+    </div>
+
+    <!-- FOOTER  -->
+    <div id="footer_wrap" class="outer">
+      <footer class="inner">
+        <p class="copyright">Toe maintained by <a href="https://github.com/Houet">Houet</a></p>
+        <p>Published with <a href="http://pages.github.com">GitHub Pages</a></p>
+      </footer>
+    </div>
+
+    
+
+  </body>
+</html>
