@@ -1,24 +1,24 @@
-#require 
+### require 
 
 python-twitter and pytz module
 
 execute  TOE.py 
 
-#necessary environment variable :
+### necessary environment variable :
 					
-*CONSUMER_KEY
-*CONSUMER_SECRET
-*ACCES_TOKEN_SECRET
-*ACCES_TOKEN_KEY
+* CONSUMER_KEY
+* CONSUMER_SECRET
+* ACCES_TOKEN_SECRET
+* ACCES_TOKEN_KEY
 
 
-#exit error :
+### exit error :
  		 
 1 -> no environment value 
 2 -> wrong environment value for twitter (not working)
 
 
-#working :
+### working :
 
 the programm looks for the last "good" tweet ,ie the last earthquake published, 
 catches the date and looks for every later event 
