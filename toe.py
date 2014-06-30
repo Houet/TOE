@@ -47,6 +47,10 @@ YEAR={
 LOCAL = timezone("Europe/Paris")
 UTC =pytz.utc
 
+#url
+renass="http://renass.unistra.fr/fdsnws/event/1/query?orderby=\
+time&format=json&longitude=1.9&limit=50&latitude=46.6&maxradius=8.0"
+
 
 class MissingValue():
 	""" exception raises when a value is missing  """
@@ -290,8 +294,7 @@ if __name__ == '__main__' :
 	nb=50
 
 	#webservice data recovery
-	sock = urllib.urlopen(
-		"http://renass.unistra.fr/fdsnws/event/1/query?orderby=time&format=json&longitude=1.9&limit=%s&latitude=46.6&maxradius=8.0" %nb)
+	sock = urllib.urlopen(renass)
 	text = sock.read()
 	sock.close()
 
