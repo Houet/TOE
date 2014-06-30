@@ -1,0 +1,30 @@
+
+requiert les bibliotheques python-twitter et pytz
+
+executer le script TOE.py 
+
+compte twitter associé :  pseudo : RivGeralt
+						  password : thewitcher2  (notez l'originalité de tout ça ;)  )
+
+
+
+variable d'environnement nécessaire :
+					CONSUMER_KEY=CgX2BuHNH29VlBBzyepCA2PG6
+					CONSUMER_SECRET=utmpLerFVNkOV0ZC3CkGA8M3ND0akCa4TbSYCg5ekGx9GihCRQ
+					ACCES_TOKEN_SECRET=rpZvwHJ5r2kMunt9dqaktbAG4JncMpTW0Z9oEduwb75Ma
+					ACCES_TOKEN_KEY=2583918630-f4jNfYIKG34nY1lI1ffeh5gqWeSXxO4yVPooGgO
+
+
+sortie d'erreur :
+ 		 
+ 		 1 -> pas de valeur d'environnement definie
+ 		 2 -> mauvaise variable d'environnement pour l'appli twitter  (marche pas )
+
+
+ fonctionnement :
+
+ 	le programme recherche le dernier tweet aux "normes", ie le dernier seisme publié, regarde l'heure de l'evenement
+ 	et va chercher tous les evenements posterieur
+ 	si l'evenement a été modifié, il regarde le lien associé et empeche la publication en cas de doublons
+ 	si le dernier seisme publié n'est pas accessible pour une raison ou pour une autre (trop loin dans l'historique, bug)
+ 	il regarde la date du dernier tweet et publie les évenement postérieur 
