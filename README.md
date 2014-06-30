@@ -2,7 +2,7 @@
 
 python-twitter and pytz module
 
-execute  TOE.py 
+execute  toe.py 
 
 ### necessary environment variable :
 					
@@ -14,8 +14,8 @@ execute  TOE.py
 
 ### exit error :
  		 
-1 -> no environment value 
-2 -> wrong environment value for twitter (not working)
+- -> no environment value 
+- -> wrong environment value for twitter (not working)
 
 
 ### working :
