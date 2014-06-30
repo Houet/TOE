@@ -14,8 +14,8 @@ execute  toe.py
 
 ### exit error :
  		 
-- -> no environment value 
-- -> wrong environment value for twitter (not working)
+- 1 -> no environment value 
+- 2 -> wrong environment value for twitter (not working)
 
 
 ### working :
