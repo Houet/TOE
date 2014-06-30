@@ -76,8 +76,7 @@ class WrongValue():
 def get_env_var(varname):
 	variablename=os.getenv(varname)
 	if not variablename :
-		raise MissingValue("value not defined, la variable \
-		 d'environnement %s est manquante" %varname)
+		raise MissingValue("environment value not defined :%s" %varname)
 	else :
 		return variablename	
 
@@ -203,10 +202,10 @@ def DateRecovery(status,data,size,i):
 #recover the last tweet date, 
 #even if its not a earthquake and recover all event from this date
 def Default(status,data,size):
-	print u'\nOn a pas retrouvé le dernier seisme publié\n\
-	recuperation par defaut du dernier tweet'
+	print u'\nWe didn\'t find the last earthquake published\n\
+	default recovery '
 	time=convTimeTwitter(status[0].created_at)
-	response=0,'aucun'
+	response=0,'none'
 	#var to cover the list, possible= true if we find a "readable" tweet, 
 	#nb event since the last tweet "readable"
 	t=0
@@ -316,8 +315,8 @@ if __name__ == '__main__' :
 	nbEvent , date = DateRecovery(statuses,textJson,size,0)
 
 	#if possible :
-	print '\nDernier evenement publie: ',date,'\nNombre d\'evenement(s) \
-	depuis :', nbEvent,'\n'
+	print '\nLast event published: ',date,'\nNumber of event(s) \
+	since :', nbEvent,'\n'
 
 
 	#list of tweet aleady published, url comparison
@@ -347,17 +346,18 @@ if __name__ == '__main__' :
 			if url != listOldEvent[j] :
 				boule = True
 			else :
-				print 'on a deja publie cette information !', listOldEvent[j]
+				print 'we already published this information !', listOldEvent[j]
 				boule = False
 				break
 
 		if boule :		
 			try :
 				api.PostUpdate(description+"\n"+hour+"\n"+url)
-				print 'publication de l\'information reussie !'
+				print 'Successful publication !\n', description 
+				print hour , '\n', url
 				newTweet += 1
 			except :
-				print "twitter signale : on a deja publie cette information !"
+				print "twitter : we already published this information !"
 
 	if newTweet >= 1 :		
-		print '\n',newTweet,'nouveau(x) tweet(s) ont ete publie(s) avec succes!'	
+		print '\n',newTweet,'new tweet(s) were successfully published !!'	
