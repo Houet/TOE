@@ -3,8 +3,7 @@ requiert les bibliotheques python-twitter et pytz
 
 executer le script TOE.py 
 
-compte twitter associé :  pseudo : RivGeralt
-						  password : thewitcher2  (notez l'originalité de tout ça ;)  )
+compte twitter associé :  
 
 
 
