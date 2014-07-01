@@ -259,7 +259,7 @@ limit=30&starttime=%s&latitude=46.6&maxradius=8.0" %(magnitude, lastDay)
 	try :
 		textJson=Get_json(text)
 	except NoData, e:
-		logging.warning(e) 
+		logging.info(e) 
 		sys.exit(3)
 
 	#size of list
