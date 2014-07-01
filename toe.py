@@ -92,13 +92,7 @@ def Get_status(api,nb):
 
 #utc to local, string format 2014-06-25T10:55:42
 def utcToLocal(string):
-	year=int(string[0:4])
-	month=int(string[5:7])
-	day=int(string[8:10])
-	hour=int(string[11:13])
-	minutes=int(string[14:16])
-	sec=int(string[17:19])
-	naive=datetime(year,month,day,hour,minutes,sec)
+	naive=datetime.strptime(string,'%Y-%m-%dT%H:%M:%S')
 	local_dt=LOCAL.localize(naive, is_dst=None)
 	utc_dt=local_dt.astimezone(UTC)
 	string = utc_dt.strftime('%Y-%m-%dT%H:%M:%S')
@@ -108,13 +102,8 @@ def utcToLocal(string):
 
 #time readable by humans
 def conversion(string):
-	year=int(string[0:4])
-	month=int(string[5:7])
-	day=int(string[8:10])
-	hour=int(string[11:13])
-	minutes=int(string[14:16])
-	sec=int(string[17:19])
-	naive=datetime(year,month,day,hour,minutes,sec,tzinfo=UTC)
+	utc_dt=datetime.strptime(string,'%Y-%m-%dT%H:%M:%S')
+	naive= UTC.localize(utc_dt)
 	local_dt=naive.astimezone(LOCAL)
 	string =local_dt.strftime('le %d %B %Y ')+u'à'+local_dt.strftime(' %H:%M:%S\
 	 heure locale')
