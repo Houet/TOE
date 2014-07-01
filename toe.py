@@ -210,8 +210,7 @@ def compare(time1,time2):
 
 if __name__ == '__main__' :
 
-
-
+	logging.basicConfig(level=logging.WARNING)
 
 	try :
 		CONSUMER_KEY=get_env_var('CONSUMER_KEY')
@@ -248,7 +247,7 @@ default = 2')
 	renass="http://renass.unistra.fr/\
 fdsnws/event/1/query?orderby=time&format=json&longitude=1.9&minmagnitude=%s&\
 limit=30&starttime=%s&latitude=46.6&maxradius=8.0" %(magnitude, lastDay)
-	logging.info('last day : ',lastDay )
+	logging.info('last day : %s' %lastDay )
 
 	#webservice data recovery
 	sock = urllib.urlopen(renass)
@@ -277,8 +276,8 @@ limit=30&starttime=%s&latitude=46.6&maxradius=8.0" %(magnitude, lastDay)
 	nbEvent , date = DateRecovery(statuses,textJson,size,0)
 
 	#if possible :
-	logging.info ('\nLast event published: ',date,'\nNumber of event(s) \
-	since :', nbEvent,'\n')
+	logging.info ('\nLast event published: %s \nNumber of event(s) \
+	since :%s \n' %(date,nbEvent))
 
 
 	#list of tweet aleady published, url comparison
@@ -307,18 +306,18 @@ limit=30&starttime=%s&latitude=46.6&maxradius=8.0" %(magnitude, lastDay)
 				boule = True
 			else :
 				logging.warning ('we already published this \
-information !', listOldEvent[j])
+information ! %s' %listOldEvent[j])
 				boule = False
 				break
 
 		if boule :		
 			try :
 				api.PostUpdate(description+"\n"+hour+"\n"+url)
-				logging.info ('Successful publication !\n', description )
-				logging.info (hour , '\n', url)
+				logging.info ('Successful publication !\n%s' %description )
+				logging.info ('%s \n%s' %(hour, url))
 				newTweet += 1
 			except :
 				logging.warning("twitter: information was already published !")
 
 	if newTweet >= 1 :		
-		logging.info('\n',newTweet,'new tweet(s) were successfully published!!')	
+		logging.info('%s new tweet(s) were successfully published!!' %newTweet)	
