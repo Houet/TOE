@@ -1,5 +1,5 @@
 #!/usr/bin/env python
-# -*- coding: utf8 -*-
+# -*- coding: utf-8 -*-
 
 import urllib
 import json
@@ -14,20 +14,6 @@ import locale
 locale.setlocale(locale.LC_TIME,'')
 
 
-FRENCHMONTH={
-	'01':'janvier',
-	'02':'fevrier',
-	'03':'mars',
-	'04':'avril',
-	'05':'mai',
-	'06':'juin',
-	'07':'juillet',
-	'08':'aout',
-	'09':'septembre',
-	'10':'octobre',
-	'11':'novembre',
-	'12':'decembre',
-	}
 YEAR={
 	'01':'Jan',
 	'02':'Feb',
@@ -90,15 +76,6 @@ def Get_status(api,nb):
 	else : 
 		return statuses 
 
-#utc to local, string format 2014-06-25T10:55:42
-def utcToLocal(string):
-	naive=datetime.strptime(string,'%Y-%m-%dT%H:%M:%S')
-	local_dt=LOCAL.localize(naive, is_dst=None)
-	utc_dt=local_dt.astimezone(UTC)
-	string = utc_dt.strftime('%Y-%m-%dT%H:%M:%S')
-	#print string
-	return string
-
 
 #time readable by humans
 def conversion(string):
@@ -108,28 +85,6 @@ def conversion(string):
 	string =local_dt.strftime('le %d %B %Y ')+u'à'+local_dt.strftime(' %H:%M:%S\
 	 heure locale')
 	return string 
-
-
-#change time format : le 25 juin 2014 a 10:55:42 -> 2014-06-25T10:55:42
-def reconversion(string):
-
-	day=string[3:5]
-	for key, value  in FRENCHMONTH.items():
-		nbchar=string.find(value)
-		if nbchar > 0 :
-			month=key
-			size=len(key)
-			t=7+size
-			year=string[t+2:t+6]
-			hour=string[t+9:t+11]
-			if hour < 10 :
-				hour='0'+hour
-			rest=string[t+12:t+17]
-			string = year+u'-'+month+u'-'+day+u'T'+hour+u':'+rest
-			#print 'avant conversion ', string
-			string=utcToLocal(string)
-	return string
-
 
 
 #change time format "twitter" to "normal" : 
@@ -149,20 +104,28 @@ def convTimeTwitter(string):
 #the last "readable" tweet, event date recovery
 def DateRecovery(status,data,size,i):
 	response=None
-	dcod=status[i].text
-	informer = 1+dcod.find(u'\nle ')   
-	#+ 1 because we begin at '\n' and not at 'l' char
-	timesignal=u''
-	if informer > 0 :
-		while dcod[informer] != u'h' :
-			timesignal = timesignal + dcod[informer]
-			if informer < len(dcod)-1 :
-				informer += 1
-			else :
-				break
+	dcod=str(status[i])
+	stringToFind='http://renass.unistra.fr/evenements/'
+	informer=dcod.find(stringToFind)+len(stringToFind)
+	Id = ''
+	while dcod[informer] != '"' :
+		Id = Id + dcod[informer]
+		informer += 1
 
-	#timesignal = event dateof the last tweet put to the right format 
-	timesignal=reconversion(timesignal)
+	#webservice data recovery
+	if len(Id) > 15 :
+		eventId="http://renass.unistra.fr/\
+fdsnws/event/1/query?eventid=%s&format=json"%Id
+		sock = urllib.urlopen(eventId)
+		text = sock.read()
+		sock.close()
+
+	#data to json
+		textJson= json.loads(text)
+
+		timesignal=textJson['features'][0]['properties']['time']
+	else :
+		timesignal=Id
 
 	#var to cover the list, possible= true if we find a "readable" tweet,
 	# nb event since the last tweet "readable"
