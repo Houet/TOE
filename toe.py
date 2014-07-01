@@ -73,13 +73,14 @@ def get_env_var(varname):
 	else :
 		return variablename	
 
-#manage bad authentification with twitter   :( doesnt work 
+#manage bad authentification with twitter   
 def Get_status(api,nb):
-	statuses=api.GetHomeTimeline(count=nb)
-	if not statuses:
-		raise WrongValue("\nWrong values\n")
-	else : 
-		return statuses 
+	try :
+		statuses=api.GetHomeTimeline(count=nb)
+	except :
+		raise WrongValue("\nWrong identification for twitter\n")
+	 
+	return statuses 
 
 
 def Get_json(text):
@@ -269,7 +270,7 @@ limit=30&starttime=%s&latitude=46.6&maxradius=8.0" %(magnitude, lastDay)
 	try :
 		statuses=Get_status(api,nb)
 	except WrongValue,e :
-		logging.warning(e) 
+		logging.error(e) 
 		sys.exit(2) 
 
 	#nb earthquake since last event published 
