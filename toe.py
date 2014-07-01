@@ -219,7 +219,7 @@ if __name__ == '__main__' :
 		ACCES_TOKEN_KEY=get_env_var('ACCES_TOKEN_KEY')
 		ACCES_TOKEN_SECRET=get_env_var('ACCES_TOKEN_SECRET')
 	except MissingValue, e:
-		logging.warning(e)
+		logging.error(e)
 		sys.exit(1)
 
 	#authentification
