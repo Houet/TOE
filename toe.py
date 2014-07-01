@@ -34,10 +34,11 @@ LOCAL = timezone("Europe/Paris")
 UTC =pytz.utc
 
 #url
-lastDay=(datetime.now()-timedelta(2)).strftime('%Y-%m-%dT00:00:00')
+magnitude=2.0
+lastDay=(datetime.now()-timedelta(1)).strftime('%Y-%m-%dT00:00:00')
 renass="http://renass.unistra.fr/\
-fdsnws/event/1/query?orderby=time&format=json&longitude=1.9&limit=\
-30&starttime=%s&latitude=46.6&maxradius=8.0" %lastDay
+fdsnws/event/1/query?orderby=time&format=json&longitude=1.9&minmagnitude=%s&\
+limit=30&starttime=%s&latitude=46.6&maxradius=8.0" %(magnitude, lastDay)
 print 'last day : ',lastDay
 
 class MissingValue():
@@ -52,6 +53,16 @@ class MissingValue():
 
 class WrongValue():
 	""" exception raises when a value is wrong """
+
+	def __init__(self,reason):
+		self.reason=reason
+
+	def __str__(self):
+		return self.reason
+
+
+class NoData():
+	"""exception raises when no JSON object could be decoded """
 
 	def __init__(self,reason):
 		self.reason=reason
@@ -76,6 +87,13 @@ def Get_status(api,nb):
 	else : 
 		return statuses 
 
+
+def Get_json(text):
+	if text[0] != '{' :
+		raise NoData("No data for your request")
+	else :
+		textJson=json.loads(text)
+		return textJson
 
 #time readable by humans
 def conversion(string):
@@ -222,7 +240,11 @@ if __name__ == '__main__' :
 	sock.close()
 
 	#data to json
-	textJson= json.loads(text)
+	try :
+		textJson=Get_json(text)
+	except NoData, e:
+		print e 
+		sys.exit(3)
 
 	#size of list
 	size = len (textJson['features'])
