@@ -247,7 +247,7 @@ default = 2')
 	renass="http://renass.unistra.fr/\
 fdsnws/event/1/query?orderby=time&format=json&longitude=1.9&minmagnitude=%s&\
 limit=30&starttime=%s&latitude=46.6&maxradius=8.0" %(magnitude, lastDay)
-	logging.info('last day : %s' %lastDay )
+	
 
 	#webservice data recovery
 	sock = urllib.urlopen(renass)
