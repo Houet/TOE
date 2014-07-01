@@ -222,45 +222,14 @@ def Default(status,data,size):
 #date format type 2014-06-26T10:55:42
 def compare(time1,time2):
 	rep=None
-	#year comparison 
-	if int(time1[0:4]) > int(time2[0:4]) :
+	times1=datetime.strptime(time1,'%Y-%m-%dT%H:%M:%S')
+	times2=datetime.strptime(time2,'%Y-%m-%dT%H:%M:%S')
+	duree= times1-times2
+	if duree.total_seconds() > 0 :
 		rep=True
-	elif int(time1[0:4]) < int(time2[0:4]) :
-		rep=False
 	else :
-		#month comparison
-		if int(time1[5:7]) > int(time2[5:7]) :
-			rep=True
-		elif int(time1[5:7]) < int(time2[5:7]) :
-			rep=False
-		else :
-			#day comparison
-			if int(time1[8:10]) > int(time2[8:10]) :
-				rep=True
-			elif int(time1[8:10]) < int(time2[8:10]) :
-				rep=False
-			else :
-				#hour comparison
-				if int(time1[11:13]) > int(time2[11:13]) :
-					rep=True
-				elif int(time1[11:13]) < int(time2[11:13]) :
-					rep=False
-				else :
-					#min comparison
-					if int(time1[14:16]) > int(time2[14:16]) :
-						rep=True
-					elif int(time1[14:16]) < int(time2[14:16]) :
-						rep=False
-					else :
-						#sec comparison
-						if int(time1[17:19]) > int(time2[17:19]) :
-							rep=True
-						elif int(time1[17:19]) < int(time2[17:19]) :
-							rep=False
-						else :
-							#egality
-							rep=False
-		return rep
+		rep=False
+	return rep
 
 
 
