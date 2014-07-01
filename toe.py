@@ -48,7 +48,7 @@ LOCAL = timezone("Europe/Paris")
 UTC =pytz.utc
 
 #url
-lastDay=(datetime.now()-timedelta(1)).strftime('%Y-%m-%dT00:00:00')
+lastDay=(datetime.now()-timedelta(2)).strftime('%Y-%m-%dT00:00:00')
 renass="http://renass.unistra.fr/\
 fdsnws/event/1/query?orderby=time&format=json&longitude=1.9&limit=\
 30&starttime=%s&latitude=46.6&maxradius=8.0" %lastDay
