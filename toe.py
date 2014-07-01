@@ -7,6 +7,7 @@ import twitter
 import os 
 import sys
 import time
+import logging
 import pytz, datetime
 from pytz import timezone
 from datetime import datetime,timedelta
@@ -167,8 +168,8 @@ fdsnws/event/1/query?eventid=%s&format=json"%Id
 #recover the last tweet date, 
 #even if its not a earthquake and recover all event from this date
 def Default(status,data,size):
-	print u'\nWe didn\'t find the last earthquake published\n\
-	default recovery '
+	logging.info(u'\nWe didn\'t find the last earthquake published\n\
+	default recovery ')
 	time=convTimeTwitter(status[0].created_at)
 	response=0,'none'
 	#var to cover the list, possible= true if we find a "readable" tweet, 
@@ -209,13 +210,16 @@ def compare(time1,time2):
 
 if __name__ == '__main__' :
 
+
+
+
 	try :
 		CONSUMER_KEY=get_env_var('CONSUMER_KEY')
 		CONSUMER_SECRET=get_env_var('CONSUMER_SECRET')
 		ACCES_TOKEN_KEY=get_env_var('ACCES_TOKEN_KEY')
 		ACCES_TOKEN_SECRET=get_env_var('ACCES_TOKEN_SECRET')
 	except MissingValue, e:
-		print e
+		logging.warning(e)
 		sys.exit(1)
 
 	#authentification
@@ -231,19 +235,20 @@ if __name__ == '__main__' :
 	try :
 		magnitude=get_env_var('MAGNITUDE_MIN')
 	except :
-		print 'no value for environment variable MAGNITUDE_MIN, default = 2'
+		logging.warning('no value for environment variable MAGNITUDE_MIN,\
+default = 2')
 		magnitude = 2
 	try :
 		dday= get_env_var('NB_DAY') 
 	except : 
-		print 'no value for environment variable NB_DAY, default = 2'
+		logging.warning('no value for environment variable NB_DAY, default = 2')
 		dday = 2
 
 	lastDay=(datetime.now()-timedelta(int(dday))).strftime('%Y-%m-%dT00:00:00')
 	renass="http://renass.unistra.fr/\
 fdsnws/event/1/query?orderby=time&format=json&longitude=1.9&minmagnitude=%s&\
 limit=30&starttime=%s&latitude=46.6&maxradius=8.0" %(magnitude, lastDay)
-	print 'last day : ',lastDay
+	logging.info('last day : ',lastDay )
 
 	#webservice data recovery
 	sock = urllib.urlopen(renass)
@@ -254,7 +259,7 @@ limit=30&starttime=%s&latitude=46.6&maxradius=8.0" %(magnitude, lastDay)
 	try :
 		textJson=Get_json(text)
 	except NoData, e:
-		print e 
+		logging.warning(e) 
 		sys.exit(3)
 
 	#size of list
@@ -265,15 +270,15 @@ limit=30&starttime=%s&latitude=46.6&maxradius=8.0" %(magnitude, lastDay)
 	try :
 		statuses=Get_status(api,nb)
 	except WrongValue,e :
-		print e
+		logging.warning(e) 
 		sys.exit(2) 
 
 	#nb earthquake since last event published 
 	nbEvent , date = DateRecovery(statuses,textJson,size,0)
 
 	#if possible :
-	print '\nLast event published: ',date,'\nNumber of event(s) \
-	since :', nbEvent,'\n'
+	logging.info ('\nLast event published: ',date,'\nNumber of event(s) \
+	since :', nbEvent,'\n')
 
 
 	#list of tweet aleady published, url comparison
@@ -286,8 +291,6 @@ limit=30&starttime=%s&latitude=46.6&maxradius=8.0" %(magnitude, lastDay)
 			link = link + decodeMe[indication]
 			indication += 1
 	 	listOldEvent.append(link)
-
-	#print listOldEvent
 
 
 	newTweet=0
@@ -303,18 +306,19 @@ limit=30&starttime=%s&latitude=46.6&maxradius=8.0" %(magnitude, lastDay)
 			if url != listOldEvent[j] :
 				boule = True
 			else :
-				print 'we already published this information !', listOldEvent[j]
+				logging.warning ('we already published this \
+information !', listOldEvent[j])
 				boule = False
 				break
 
 		if boule :		
 			try :
 				api.PostUpdate(description+"\n"+hour+"\n"+url)
-				print 'Successful publication !\n', description 
-				print hour , '\n', url
+				logging.info ('Successful publication !\n', description )
+				logging.info (hour , '\n', url)
 				newTweet += 1
 			except :
-				print "twitter : we already published this information !"
+				logging.warning("twitter: information was already published !")
 
 	if newTweet >= 1 :		
-		print '\n',newTweet,'new tweet(s) were successfully published !!'	
+		logging.info('\n',newTweet,'new tweet(s) were successfully published!!')	

@@ -16,6 +16,7 @@ execute  toe.py
  		 
 - 1 -> no environment value 
 - 2 -> wrong environment value for twitter (not working)
+- 3 -> No json could be decode 
 
 
 ### working :
