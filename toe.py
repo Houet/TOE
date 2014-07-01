@@ -9,7 +9,7 @@ import sys
 import time
 import pytz, datetime
 from pytz import timezone
-from datetime import datetime
+from datetime import datetime,timedelta
 import locale
 locale.setlocale(locale.LC_TIME,'')
 
@@ -48,9 +48,11 @@ LOCAL = timezone("Europe/Paris")
 UTC =pytz.utc
 
 #url
-renass="http://renass.unistra.fr/fdsnws/event/1/query?orderby=\
-time&format=json&longitude=1.9&limit=50&latitude=46.6&maxradius=8.0"
-
+lastDay=(datetime.now()-timedelta(1)).strftime('%Y-%m-%dT00:00:00')
+renass="http://renass.unistra.fr/\
+fdsnws/event/1/query?orderby=time&format=json&longitude=1.9&limit=\
+30&starttime=%s&latitude=46.6&maxradius=8.0" %lastDay
+print 'last day : ',lastDay
 
 class MissingValue():
 	""" exception raises when a value is missing  """
@@ -211,6 +213,7 @@ def Default(status,data,size):
 	t=0
 	possible=True
 	nbEvent=0
+
 
 	#look for the last tweet 's time to limit data recovery
 	while compare(data['features'][t]['properties']['time'], time) :
