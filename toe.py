@@ -33,13 +33,6 @@ YEAR={
 LOCAL = timezone("Europe/Paris")
 UTC =pytz.utc
 
-#url
-magnitude=2.0
-lastDay=(datetime.now()-timedelta(1)).strftime('%Y-%m-%dT00:00:00')
-renass="http://renass.unistra.fr/\
-fdsnws/event/1/query?orderby=time&format=json&longitude=1.9&minmagnitude=%s&\
-limit=30&starttime=%s&latitude=46.6&maxradius=8.0" %(magnitude, lastDay)
-print 'last day : ',lastDay
 
 class MissingValue():
 	""" exception raises when a value is missing  """
@@ -233,6 +226,24 @@ if __name__ == '__main__' :
 
 	#nb event to recovery
 	nb=50
+
+	# get env var, by default magnitude = 2 and dday = 2
+	try :
+		magnitude=get_env_var('MAGNITUDE_MIN')
+	except :
+		print 'no value for environment variable MAGNITUDE_MIN, default = 2'
+		magnitude = 2
+	try :
+		dday= get_env_var('NB_DAY') 
+	except : 
+		print 'no value for environment variable NB_DAY, default = 2'
+		dday = 2
+
+	lastDay=(datetime.now()-timedelta(int(dday))).strftime('%Y-%m-%dT00:00:00')
+	renass="http://renass.unistra.fr/\
+fdsnws/event/1/query?orderby=time&format=json&longitude=1.9&minmagnitude=%s&\
+limit=30&starttime=%s&latitude=46.6&maxradius=8.0" %(magnitude, lastDay)
+	print 'last day : ',lastDay
 
 	#webservice data recovery
 	sock = urllib.urlopen(renass)
