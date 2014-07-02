@@ -8,7 +8,7 @@
 
 
 TOE is an application which published on twitter earthquakes from 
-http://renass.unistra.fr/
+http://renass.unistra.fr/ using the Twitter API
 
 
 
@@ -31,7 +31,7 @@ python toe.py
 ```
 
 
-### working :
+### Working :
 
 *************
 
@@ -49,18 +49,19 @@ than 2 days when they are published. This parameters can be change with
 the MAGNITUDE_MIN and NB_DAY environment values.
 
 
-### necessary environment variable :
+### Necessary  :
 
-************************************
+****************
 
-					
+
+Following environment variable are necessary :					
 * CONSUMER_KEY
 * CONSUMER_SECRET
 * ACCES_TOKEN_SECRET
 * ACCES_TOKEN_KEY
 
 
-### exit error :
+### Exit error :
  
 ****************		 
  
