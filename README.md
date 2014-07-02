@@ -7,7 +7,7 @@
 *****************
 
 
-TOE is an application which published on twitter earthquakes from 
+TOE is an application which publishes on twitter earthquakes from 
 http://renass.unistra.fr/ using the Twitter API
 
 
@@ -38,14 +38,14 @@ python toe.py
 
 The programm looks for the last "good" tweet ,ie the last earthquake published, 
 catches the date and looks for every later event .
-If the event is already published, it checks the associate url and 
-detained from duplicate; 
+If the event has already been published, it checks the associate url and 
+detaines from duplicating; 
 if the last event published is not accessible 
 for a special reason (too deep in the history , bug, ... )
-it looks for the last tweet date and publish later event.
+it looks for the last tweet date and publishes later event.
 
 All earthquake published should respect a minimun magnitude and are not older 
-than 2 days when they are published. This parameters can be change with 
+than 2 days when they are published. These parameters can be changed with 
 the MAGNITUDE_MIN and NB_DAY environment values.
 
 
@@ -54,7 +54,7 @@ the MAGNITUDE_MIN and NB_DAY environment values.
 ****************
 
 
-Following environment variable are necessary :					
+Following environment variables are necessary :					
 * CONSUMER_KEY
 * CONSUMER_SECRET
 * ACCES_TOKEN_SECRET
@@ -70,7 +70,7 @@ Following environment variable are necessary :
 |-----------|--------------------------------------|
 |	  1     |  No environment value                |
 |	  2     |  Wrong environment value for twitter | 
-|	  3     |  No json could be decode             |
+|	  3     |  No json could be decoded             |
 
 
 
