@@ -211,7 +211,11 @@ def compare(time1,time2):
 
 if __name__ == '__main__' :
 
-	loglevel=str(sys.argv[1])
+	if len (sys.argv) == 2 :
+		loglevel=str(sys.argv[1])
+	else :
+		loglevel='warning'
+	
 	numeric_level = getattr(logging, loglevel.upper(), None)
 	if not isinstance(numeric_level, int) :
 		raise ValueError('Invalid log level: %s' % loglevel)
