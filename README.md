@@ -1,25 +1,35 @@
-### require :
+# TOE
 
-python-twitter and pytz module
+### What is TOE ?
 
-execute  toe.py 
+*****************
 
-### necessary environment variable :
-					
-* CONSUMER_KEY
-* CONSUMER_SECRET
-* ACCES_TOKEN_SECRET
-* ACCES_TOKEN_KEY
+TOE is an application which published on twitter earthquakes from 
+(http://renass.unistra.fr/) 
 
 
-### exit error :
- 		 
-- 1 -> no environment value 
-- 2 -> wrong environment value for twitter 
-- 3 -> No json could be decode 
+
+### How to use it ?  :
+
+**********************
+
+Add the two modules python-twitter and pytz :
+
+```
+sudo apt-get install python-twitter 
+sudo apt-get install pytz
+```
+
+then run :
+
+```
+python toe.py 
+```
 
 
 ### working :
+
+*************
 
 The programm looks for the last "good" tweet ,ie the last earthquake published, 
 catches the date and looks for every later event .
@@ -30,6 +40,31 @@ for a special reason (too deep in the history , bug, ... )
 it looks for the last tweet date and publish later event.
 
 All earthquake published should respect a minimun magnitude and are not older 
-than 2 days. This parameters can be change with the MAGNITUDE_MIN and NB_DAY
-environment values.
+than 2 days when they are published. This parameters can be change with 
+the MAGNITUDE_MIN and NB_DAY environment values.
+
+
+### necessary environment variable :
+
+************************************
+					
+* CONSUMER_KEY
+* CONSUMER_SECRET
+* ACCES_TOKEN_SECRET
+* ACCES_TOKEN_KEY
+
+
+### exit error :
+ 
+****************		 
+ 
+	Code   |   			Description
+-------------------------------------------------
+	 1     |  No environment value 
+	 2     |  Wrong environment value for twitter 
+	 3     |  No json could be decode 
+
+
+
+
 
