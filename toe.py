@@ -73,6 +73,7 @@ def get_env_var(varname):
 	else :
 		return variablename	
 
+
 #manage bad authentification with twitter   
 def Get_status(api,nb):
 	try :
@@ -219,8 +220,8 @@ if __name__ == '__main__' :
 	numeric_level = getattr(logging, loglevel.upper(), None)
 	if not isinstance(numeric_level, int) :
 		raise ValueError('Invalid log level: %s' % loglevel)
-	
-	logging.basicConfig(level=numeric_level)
+	formatter = '%(asctime)s :: %(levelname)s :: %(message)s'
+	logging.basicConfig(level=numeric_level, format=formatter)
 
 	try :
 		CONSUMER_KEY=get_env_var('CONSUMER_KEY')
