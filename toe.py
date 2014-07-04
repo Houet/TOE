@@ -282,6 +282,7 @@ if __name__ == '__main__' :
 	lastDay=(datetime.now()-timedelta(int(dday))).strftime('%Y-%m-%dT00:00:00')
 
 	url_argv['starttime']=lastDay
+	url_argv['minmagnitude']=magnitude
 	renass=URL_BASE+URL_SEARCH+urllib.urlencode(url_argv.items())
 	
 
