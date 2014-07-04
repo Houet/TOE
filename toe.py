@@ -107,6 +107,16 @@ def Get_json(text):
 		return textJson
 
 
+def Try_Get(varname):
+		try :
+			ret = get_env_var(varname)
+		except : 
+			logging.warning('no value for environment variable %s,\
+ default = 2' %varname)
+			ret = 2
+		return ret 
+
+
 #time readable by humans
 def conversion(string):
 	utc_dt=datetime.strptime(string,'%Y-%m-%dT%H:%M:%S')
@@ -151,7 +161,6 @@ def DateRecovery(status,data,size,i):
 		sock.close()
 
 	#data to json
-		# textJson= json.loads(text)
 		try :
 			textJson=Get_json(text)
 			timesignal=textJson['features'][0]['properties']['time']
@@ -184,7 +193,7 @@ def DateRecovery(status,data,size,i):
 		if i+1 < len(status):
 			response=DateRecovery(status,data,size,i+1)
 		else :
-			#default response, no "readeble" tweet was found
+			#default response, no "readable" tweet was found
 			response =Default(status,data,size)
 	return response
 
@@ -267,17 +276,8 @@ if __name__ == '__main__' :
 	nb=50
 
 	# get env var, by default magnitude = 2 and dday = 2
-	try :
-		magnitude=get_env_var('MAGNITUDE_MIN')
-	except :
-		logging.warning('no value for environment variable MAGNITUDE_MIN,\
-default = 2')
-		magnitude = 2
-	try :
-		dday= get_env_var('NB_DAY') 
-	except : 
-		logging.warning('no value for environment variable NB_DAY, default = 2')
-		dday = 2
+	magnitude = Try_Get('MAGNITUDE_MIN')
+	dday = Try_Get('NB_DAY')
 
 	lastDay=(datetime.now()-timedelta(int(dday))).strftime('%Y-%m-%dT00:00:00')
 
@@ -329,28 +329,18 @@ default = 2')
 
 
 	newTweet=0
-	boule = True
 	#tweet data + check if they are already published (compare url)
 	for i in range(size-nbEvent,size):
 		description=textJson['features'][size-1-i]['properties']['description']
 		url=textJson['features'][size-1-i]['properties']['url']
-		hour=textJson['features'][size-1-i]['properties']['time']
-		hour=conversion((hour))
+		time=textJson['features'][size-1-i]['properties']['time']
+		time=conversion(time)
 
-		for j in range(len (listOldEvent)):
-			if url != listOldEvent[j] :
-				boule = True
-			else :
-				logging.warning ('we already published this \
-information ! %s' %listOldEvent[j])
-				boule = False
-				break
-
-		if boule :		
+		if not url in listOldEvent :		
 			try :
-				api.PostUpdate(description+"\n"+hour+"\n"+url)
+				api.PostUpdate(description+"\n"+time+"\n"+url)
 				logging.info ('Successful publication !\n%s' %description )
-				logging.info ('%s \n%s' %(hour, url))
+				logging.info ('%s \n%s' %(time, url))
 				newTweet += 1
 			except :
 				logging.warning("twitter: information was already published !")
