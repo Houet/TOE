@@ -30,9 +30,24 @@ YEAR={
 	'12':'Dec',
 	}
 
+url_argv = {
+	"orderby"     : "time",
+	"format"      : "json" ,
+	"longitude"   : "1.9",
+	"latitude"    : "46.6",
+	"limit"       : "30",
+	"maxradius"   : "8.0",
+	"starttime"   : (datetime.now()-timedelta(2)).strftime('%Y-%m-%dT00:00:00'),
+	"minmagnitude": "2.0" ,
+	}
+
 #timezone
 LOCAL = timezone("Europe/Paris")
 UTC =pytz.utc
+
+URL_BASE="http://renass.unistra.fr/"
+URL_SEARCH="fdsnws/event/1/query?"
+URL_FIND="evenements/"
 
 
 class MissingValue():
@@ -91,6 +106,7 @@ def Get_json(text):
 		textJson=json.loads(text)
 		return textJson
 
+
 #time readable by humans
 def conversion(string):
 	utc_dt=datetime.strptime(string,'%Y-%m-%dT%H:%M:%S')
@@ -119,7 +135,7 @@ def convTimeTwitter(string):
 def DateRecovery(status,data,size,i):
 	response=None
 	dcod=str(status[i])
-	stringToFind='http://renass.unistra.fr/evenements/'
+	stringToFind=URL_BASE + URL_FIND
 	informer=dcod.find(stringToFind)+len(stringToFind)
 	Id = ''
 	while dcod[informer] != '"' :
@@ -128,16 +144,22 @@ def DateRecovery(status,data,size,i):
 
 	#webservice data recovery
 	if len(Id) > 15 :
-		eventId="http://renass.unistra.fr/\
-fdsnws/event/1/query?eventid=%s&format=json"%Id
+		url_argv['eventid']=Id
+		eventId=URL_BASE+URL_SEARCH+urllib.urlencode(url_argv.items())
 		sock = urllib.urlopen(eventId)
 		text = sock.read()
 		sock.close()
 
 	#data to json
-		textJson= json.loads(text)
+		# textJson= json.loads(text)
+		try :
+			textJson=Get_json(text)
+			timesignal=textJson['features'][0]['properties']['time']
+		except NoData, e:
+			logging.info(e)
+			timesignal=Id
 
-		timesignal=textJson['features'][0]['properties']['time']
+		
 	else :
 		timesignal=Id
 
@@ -212,6 +234,8 @@ def compare(time1,time2):
 
 if __name__ == '__main__' :
 
+
+	#MODULE LOGGING
 	if len (sys.argv) == 2 :
 		loglevel=str(sys.argv[1])
 	else :
@@ -222,6 +246,7 @@ if __name__ == '__main__' :
 		raise ValueError('Invalid log level: %s' % loglevel)
 	formatter = '%(asctime)s :: %(levelname)s :: %(message)s'
 	logging.basicConfig(level=numeric_level, format=formatter)
+
 
 	try :
 		CONSUMER_KEY=get_env_var('CONSUMER_KEY')
@@ -255,9 +280,9 @@ default = 2')
 		dday = 2
 
 	lastDay=(datetime.now()-timedelta(int(dday))).strftime('%Y-%m-%dT00:00:00')
-	renass="http://renass.unistra.fr/\
-fdsnws/event/1/query?orderby=time&format=json&longitude=1.9&minmagnitude=%s&\
-limit=30&starttime=%s&latitude=46.6&maxradius=8.0" %(magnitude, lastDay)
+
+	url_argv['starttime']=lastDay
+	renass=URL_BASE+URL_SEARCH+urllib.urlencode(url_argv.items())
 	
 
 	#webservice data recovery
@@ -295,7 +320,7 @@ limit=30&starttime=%s&latitude=46.6&maxradius=8.0" %(magnitude, lastDay)
 	listOldEvent=[]
 	for i in range(len(statuses)) :
 		decodeMe=str(statuses[i])
-		indication = decodeMe.find('http://renass.unistra.fr')
+		indication = decodeMe.find(URL_BASE)
 		link=''
 		while decodeMe[indication] != '"' :
 			link = link + decodeMe[indication]
