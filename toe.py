@@ -41,6 +41,7 @@ url_argv = {
 	"minmagnitude": "2.0" ,
 	}
 
+
 #timezone
 LOCAL = timezone("Europe/Paris")
 UTC =pytz.utc
@@ -267,8 +268,15 @@ if __name__ == '__main__' :
 		sys.exit(1)
 
 	#authentification
-	api = twitter.Api(consumer_key=CONSUMER_KEY,consumer_secret=CONSUMER_SECRET,
-	 access_token_key=ACCES_TOKEN_KEY, access_token_secret=ACCES_TOKEN_SECRET)
+	
+	key_dict = {
+	'consumer_key'       : CONSUMER_KEY,
+	'consumer_secret'    : CONSUMER_SECRET,
+	'access_token_key'   : ACCES_TOKEN_KEY, 
+	'access_token_secret': ACCES_TOKEN_SECRET,
+	}
+
+	api = twitter.Api(** key_dict)
 	
 	
 
