@@ -58,9 +58,6 @@ class MissingValue(Exception):
         Exception.__init__(self, reason)
         self.reason = reason
 
-    def __str__(self):
-        return self.reason
-
 
 class WrongValue(Exception):
     """ exception raises when a value is wrong """
@@ -69,9 +66,6 @@ class WrongValue(Exception):
         Exception.__init__(self, reason)
         self.reason = reason
 
-    def __str__(self):
-        return self.reason
-
 
 class NoData(Exception):
     """exception raises when no JSON object could be decoded """
@@ -79,9 +73,6 @@ class NoData(Exception):
     def __init__(self, reason):
         Exception.__init__(self, reason)
         self.reason = reason
-
-    def __str__(self):
-        return self.reason
 
 
 def get_env_var(varname):
@@ -98,7 +89,7 @@ def get_status(twitter_api, number_of_tweet):
     try:
         twitter_status = twitter_api.GetHomeTimeline(count=number_of_tweet)
     except:
-        raise WrongValue("\nWrong identification for twitter\n")
+        raise WrongValue("Wrong identification for twitter")
 
     return twitter_status
 
@@ -116,7 +107,7 @@ def try_get(varname):
     """ not choose yet """
     try:
         ret = get_env_var(varname)
-    except Warning:
+    except MissingValue:
         logging.warning('no value for environment variable %s,\
  default = 2', varname)
         ret = 2
@@ -206,7 +197,7 @@ def default(status, data, size_of_list):
     even if its not a earthquake and recover all event from this date
     """
 
-    logging.info(u"We didn't find the last earthquake published :\
+    logging.info("We didn't find the last earthquake published :\
     default recovery ")
     tim_2_comp = conv_time_twitter(status[0].created_at)
     response = 0, 'none'
@@ -341,8 +332,8 @@ def main(argv=None):
     num_event, date = date_recovery(statuses, text_json, size, 0)
 
     #if possible :
-    logging.info('\nLast event published: %s \nNumber of event(s) \
-    since :%s \n', date, num_event)
+    logging.info('Last event published: %s Number of event(s) \
+    since :%s', date, num_event)
 
     new_tweet = 0
     #tweet data + check if they are already published (compare url)
