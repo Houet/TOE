@@ -7,7 +7,6 @@ import json
 import twitter
 import os
 import sys
-import time
 import logging
 import pytz
 import datetime
@@ -94,30 +93,30 @@ def get_env_var(varname):
         return variablename
 
 
-def get_status(API, nb):
+def get_status(twitter_api, number_of_tweet):
     """ manage bad authentification with twitter """
     try:
-        statuses = API.GetHomeTimeline(count=nb)
+        twitter_status = twitter_api.GetHomeTimeline(count=number_of_tweet)
     except:
         raise WrongValue("\nWrong identification for twitter\n")
 
-    return statuses
+    return twitter_status
 
 
-def get_json(text):
+def get_json(text_to_convert):
     """ manage error when loading to json """
-    if text[0] != '{':
+    if text_to_convert[0] != '{':
         raise NoData("No data for your request")
     else:
-        textJson = json.loads(text)
-        return textJson
+        text_to_json = json.loads(text_to_convert)
+        return text_to_json
 
 
 def try_get(varname):
     """ not choose yet """
     try:
         ret = get_env_var(varname)
-    except: 
+    except Warning:
         logging.warning('no value for environment variable %s,\
  default = 2', varname)
         ret = 2
@@ -130,13 +129,14 @@ def conversion(string):
     naive = UTC.localize(utc_dt)
     local_dt = naive.astimezone(LOCAL)
     string = local_dt.strftime('le %d %B %Y ') + u'à' + local_dt.strftime(' \
-        %H:%M:%S heure locale')
+%H:%M:%S heure locale')
     return string
 
 
 def conv_time_twitter(string):
     """ change time format "twitter" to "normal" :
-        Thu Jun 26 07:40:58 +0000 2014 -> 2014-06-26T10:55:42 """
+        Thu Jun 26 07:40:58 +0000 2014 -> 2014-06-26T10:55:42
+    """
     day = string[8:10]
     for key, value  in YEAR.items():
         nbchar = string.find(value)
@@ -148,87 +148,85 @@ def conv_time_twitter(string):
     return string
 
 
-def date_recovery(status, data, size, i):
+def date_recovery(status, data, list_size, status_number):
     """ the last "readable" tweet, event date recovery """
-    response = None
-    dcod = str(status[i])
-    stringToFind = URL_BASE + URL_FIND
-    informer = dcod.find(stringToFind) + len(stringToFind)
-    Id = ''
+    dcod = str(status[status_number])
+    informer = dcod.find(URL_BASE + URL_FIND) + len(URL_BASE + URL_FIND)
+    event_id = ''
     while dcod[informer] != '"':
-        Id = Id + dcod[informer]
+        event_id = event_id + dcod[informer]
         informer += 1
 
     #webservice data recovery
-    if len(Id) > 15:
-        URL_ARG['eventid'] = Id
-        eventId = URL_BASE + URL_SEARCH + urllib.urlencode(URL_ARG.items())
-        sock = urllib.urlopen(eventId)
-        text = sock.read()
-        sock.close()
+    if len(event_id) > 15:
+        URL_ARG['eventid'] = event_id
+        url_id = URL_BASE + URL_SEARCH + urllib.urlencode(URL_ARG.items())
 
     #data to json
         try:
-            textJson = get_json(text)
-            timesignal = textJson['features'][0]['properties']['time']
-        except NoData, e:
-            logging.info(e)
-            timesignal = Id
+            have_json = get_json(urllib.urlopen(url_id).read())
+            urllib.urlopen(url_id).close()
+            timesignal = have_json['features'][0]['properties']['time']
+        except NoData:
+            logging.info(NoData)
+            timesignal = event_id
 
 
     else:
-        timesignal = Id
+        timesignal = event_id
 
     #var to cover the list, possible= true if we find a "readable" tweet,
     # nb event since the last tweet "readable"
-    t = 0
+    num = 0
     possible = True
-    nbEvent = 0
+    nb_event = 0
 
     #look for the last tweet 's time to limit data recovery
-    while data['features'][t]['properties']['time'] != timesignal:
-        nbEvent += 1
-        if t < size - 1:
-            t += 1
+    while data['features'][num]['properties']['time'] != timesignal:
+        nb_event += 1
+        if num < list_size - 1:
+            num += 1
         else:
             possible = False
             break
 
     if possible:
-        response = nbEvent, conversion(timesignal)
+        response = nb_event, conversion(timesignal)
     else:
-        if i + 1 < len(status):
-            response = date_recovery(status, data, size, i + 1)
+        if status_number + 1 < len(status):
+            response = date_recovery(status, data, list_size, status_number + 1)
         else:
             #default response, no "readable" tweet was found
-            response = default(status, data, size)
+            response = default(status, data, list_size)
     return response
 
 
-def default(status, data, size):
+def default(status, data, size_of_list):
     """ recover the last tweet date,
-    even if its not a earthquake and recover all event from this date """
+    even if its not a earthquake and recover all event from this date
+    """
+
     logging.info(u"We didn't find the last earthquake published :\
     default recovery ")
-    time = conv_time_twitter(status[0].created_at)
+    tim_2_comp = conv_time_twitter(status[0].created_at)
     response = 0, 'none'
-    #var to cover the list, possible= true if we find a "readable" tweet, 
+    #var to cover the list, possible= true if we find a "readable" tweet,
     #nb event since the last tweet "readable"
-    t = 0
+    loop_var = 0
     possible = True
-    nbEvent = 0
+    number_of_event = 0
 
 
     #look for the last tweet 's time to limit data recovery
-    while compare(data['features'][t]['properties']['time'], time):
-        nbEvent += 1
-        if t < size-1:
-            t += 1
+    while compare(data['features'][loop_var]['properties']['time'], tim_2_comp):
+        number_of_event += 1
+        if loop_var < size_of_list-1:
+            loop_var += 1
         else:
             possible = False
             break
     if possible:
-        response = nbEvent, conversion(time)
+        response = number_of_event, conversion(tim_2_comp)
     return response
 
 
@@ -246,13 +244,10 @@ def compare(time1, time2):
     return rep
 
 
-
-if __name__ == '__main__':
-
-
-    #MODULE LOGGING
-    if len(sys.argv) == 2:
-        loglevel = str(sys.argv[1])
+def function_logging(arg_sys):
+    """MODULE LOGGING"""
+    if len(arg_sys) == 2:
+        loglevel = str(arg_sys[1])
     else:
         loglevel = 'warning'
 
@@ -261,103 +256,115 @@ if __name__ == '__main__':
         raise ValueError('Invalid log level: %s' % loglevel)
     formatter = '%(asctime)s :: %(levelname)s :: %(message)s'
     logging.basicConfig(level=numeric_level, format=formatter)
+    return
 
 
+def env():
+    """recuperation of environment variables """
     try:
-        CONSUMER_KEY = get_env_var('CONSUMER_KEY')
-        CONSUMER_SECRET = get_env_var('CONSUMER_SECRET')
-        ACCES_TOKEN_KEY = get_env_var('ACCES_TOKEN_KEY')
-        ACCES_TOKEN_SECRET = get_env_var('ACCES_TOKEN_SECRET')
-    except MissingValue, e:
-        logging.error(e)
+        consumer_key = get_env_var('CONSUMER_KEY')
+        consumer_secret = get_env_var('CONSUMER_SECRET')
+        acces_token_key = get_env_var('ACCES_TOKEN_KEY')
+        acces_token_secret = get_env_var('ACCES_TOKEN_SECRET')
+    except MissingValue:
+        logging.error(MissingValue)
         sys.exit(1)
 
     #authentification
 
     key_dict = {
-        'consumer_key'       : CONSUMER_KEY,
-        'consumer_secret'    : CONSUMER_SECRET,
-        'access_token_key'   : ACCES_TOKEN_KEY,
-        'access_token_secret': ACCES_TOKEN_SECRET,
+        'consumer_key'       : consumer_key,
+        'consumer_secret'    : consumer_secret,
+        'access_token_key'   : acces_token_key,
+        'access_token_secret': acces_token_secret,
     }
-
-    API = twitter.Api(**key_dict)
-
+    return key_dict
 
 
-    #nb event to recovery
-    nb = 50
+def recup_old_event(status):
+    """ list of tweet aleady published, url comparison """
+
+    #list of tweet aleady published, url comparison
+    list_old_event = []
+    for i in range(len(status)):
+        decode_me = str(status[i])
+        indication = decode_me.find(URL_BASE)
+        link = ''
+        while decode_me[indication] != '"':
+            link = link + decode_me[indication]
+            indication += 1
+        list_old_event.append(link)
+    return list_old_event
+
+
+def main(argv=None):
+    """ fonction main """
+    if argv is None:
+        argv = sys.argv
+
+    function_logging(argv)
+
+    api = twitter.Api(**env())
+
+    last_day = (datetime.now() - timedelta(int(try_get('NB_DAY')))).strftime('\
+%Y-%m-%dT00:00:00')
 
     # get env var, by default magnitude = 2 and dday = 2
-    magnitude = try_get('MAGNITUDE_MIN')
-    dday = try_get('NB_DAY')
-
-    lastDay = (datetime.now() - timedelta(int(dday))).strftime('%Y-%m-%dT00:00:00')
-
-    URL_ARG['starttime'] = lastDay
-    URL_ARG['minmagnitude'] = magnitude
+    URL_ARG['starttime'] = last_day
+    URL_ARG['minmagnitude'] = try_get('MAGNITUDE_MIN')
     renass = URL_BASE + URL_SEARCH + urllib.urlencode(URL_ARG.items())
 
 
     #webservice data recovery
     sock = urllib.urlopen(renass)
-    text = sock.read()
-    sock.close()
 
     #data to json
     try:
-        textJson = get_json(text)
-    except NoData, e:
-        logging.info(e)
+        text_json = get_json(sock.read())
+        sock.close()
+    except NoData:
+        logging.info(NoData)
         sys.exit(3)
 
     #size of list
-    size = len(textJson['features'])
+    size = len(text_json['features'])
 
 
-    #tweet recovery
+    #tweet recovery , number of tweet we want to recover
     try:
-        statuses = get_status(API, nb)
-    except WrongValue, e:
-        logging.error(e)
+        statuses = get_status(api, 50)
+    except WrongValue:
+        logging.error(WrongValue)
         sys.exit(2)
 
     #nb earthquake since last event published
-    nbEvent, date = date_recovery(statuses, textJson, size, 0)
+    num_event, date = date_recovery(statuses, text_json, size, 0)
 
     #if possible :
     logging.info('\nLast event published: %s \nNumber of event(s) \
-    since :%s \n', date, nbEvent)
+    since :%s \n', date, num_event)
 
-
-    #list of tweet aleady published, url comparison
-    listOldEvent = []
-    for i in range(len(statuses)):
-        decodeMe = str(statuses[i])
-        indication = decodeMe.find(URL_BASE)
-        link = ''
-        while decodeMe[indication] != '"':
-            link = link + decodeMe[indication]
-            indication += 1
-        listOldEvent.append(link)
-
-
-    newTweet = 0
+    new_tweet = 0
     #tweet data + check if they are already published (compare url)
-    for i in range(size - nbEvent, size):
-        description = textJson['features'][size - 1 - i]['properties']['description']
-        url = textJson['features'][size - 1 - i]['properties']['url']
-        time = textJson['features'][size - 1 - i]['properties']['time']
-        time = conversion(time)
+    for i in range(size - num_event, size):
+        description = text_json['features'][size - 1 - i]['properties']['\
+description']
+        url = text_json['features'][size - 1 - i]['properties']['url']
+        age = text_json['features'][size - 1 - i]['properties']['time']
+        age = conversion(age)
 
-        if not url in listOldEvent:
+        if not url in recup_old_event(statuses):
             try:
-                API.PostUpdate(description + "\n" + time + "\n" + url)
+                api.PostUpdate(description + "\n" + age + "\n" + url)
                 logging.info('Successful publication ! %s', description)
-                logging.info('%s %s', time, url)
-                newTweet += 1
-            except:
+                logging.info('%s %s', age, url)
+                new_tweet += 1
+            except Warning:
                 logging.warning("twitter: information was already published !")
 
-    if newTweet >= 1:
-        logging.info('%s new tweet(s) were successfully published!!', newTweet)
+    if new_tweet >= 1:
+        logging.info('%s new tweet(s) were successfully published!!', new_tweet)
+
+
+if __name__ == '__main__':
+    sys.exit(main())
