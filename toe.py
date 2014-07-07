@@ -336,22 +336,29 @@ def main(argv=None):
     since :%s', date, num_event)
 
     new_tweet = 0
+    tweet_data = {}
     #tweet data + check if they are already published (compare url)
     for i in range(size - num_event, size):
-        description = text_json['features'][size - 1 - i]['properties']['\
-description']
-        url = text_json['features'][size - 1 - i]['properties']['url']
-        age = text_json['features'][size - 1 - i]['properties']['time']
-        age = conversion(age)
-        lat = text_json['features'][size - 1 - i]['geometry']['coordinates'][1]
-        lon = text_json['features'][size - 1 - i]['geometry']['coordinates'][0]
 
-        if not url in recup_old_event(statuses):
+        tweet_data['description'] = text_json['features'][size - 1 - i]['\
+properties']['description']
+        tweet_data['url'] = text_json['features'][size - 1 - i]['\
+properties']['url']
+        tweet_data['age'] = conversion(text_json['features'][size - 1 - i]['\
+properties']['time'])
+        tweet_data['lat'] = text_json['features'][size - 1 - i]['\
+geometry']['coordinates'][1]
+        tweet_data['lon'] = text_json['features'][size - 1 - i]['\
+geometry']['coordinates'][0]
+
+        if not tweet_data['url'] in recup_old_event(statuses):
             try:
-                api.PostUpdate(description + "\n" + age + "\n\
-" + url, latitude=lat, longitude=lon)
-                logging.info('Successful publication ! %s', description)
-                logging.info('%s %s', age, url)
+                api.PostUpdate(tweet_data['description'] + "\n" + tweet_data['\
+age'] + "\n" + tweet_data['url'], latitude=tweet_data['\
+lat'], longitude=tweet_data['lon'])
+                logging.info('\
+Successful publication ! %s', tweet_data['description'])
+                logging.info('%s %s', tweet_data['age'], tweet_data['url'])
                 new_tweet += 1
             except Warning:
                 logging.warning("twitter: information was already published !")
