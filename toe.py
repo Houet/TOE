@@ -343,10 +343,13 @@ description']
         url = text_json['features'][size - 1 - i]['properties']['url']
         age = text_json['features'][size - 1 - i]['properties']['time']
         age = conversion(age)
+        lat = text_json['features'][size - 1 - i]['geometry']['coordinates'][1]
+        lon = text_json['features'][size - 1 - i]['geometry']['coordinates'][0]
 
         if not url in recup_old_event(statuses):
             try:
-                api.PostUpdate(description + "\n" + age + "\n" + url)
+                api.PostUpdate(description + "\n" + age + "\n\
+" + url, latitude=lat, longitude=lon)
                 logging.info('Successful publication ! %s', description)
                 logging.info('%s %s', age, url)
                 new_tweet += 1
