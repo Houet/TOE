@@ -327,7 +327,7 @@ if __name__ == '__main__':
     parser.add_argument('-l', metavar='lvl', help='logging level')
 
     args = parser.parse_args()
-    if args.level:
-        sys.exit(main(argv=args.level))
+    if args.l:
+        sys.exit(main(argv=args.l))
     else:
         sys.exit(main())
