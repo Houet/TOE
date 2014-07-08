@@ -55,10 +55,6 @@ class MissingValue(Exception):
     """ exception raises when a value is missing  """
 
 
-class NoData(Exception):
-    """exception raises when no JSON object could be decoded """
-
-
 def get_env_var(varname, by_default=None):
     """ manage env var issue, help find missing values """
     variablename = os.getenv(varname)
@@ -72,15 +68,6 @@ default = 2', varname)
         ret = variablename
 
     return ret
-
-
-def get_json(text_to_convert):
-    """ manage error when loading to json """
-    if text_to_convert[0] != '{':
-        raise NoData("No data for your request")
-    else:
-        text_to_json = json.loads(text_to_convert)
-        return text_to_json
 
 
 def conversion(string):
@@ -124,11 +111,11 @@ def date_recovery(status, data, list_size, status_number):
 
     #data to json
         try:
-            have_json = get_json(urllib.urlopen(url_id).read())
+            have_json = json.loads(urllib.urlopen(url_id).read())
             urllib.urlopen(url_id).close()
             timesignal = have_json['features'][0]['properties']['time']
-        except NoData, exception:
-            logging.info(exception)
+        except ValueError:
+            logging.info("decoding Json has failed")
             timesignal = event_id
 
 
@@ -280,10 +267,10 @@ NB_DAY', by_default=2)))).strftime('%Y-%m-%dT00:00:00')
 
     #data to json
     try:
-        text_json = get_json(sock.read())
+        text_json = json.loads(sock.read())
         sock.close()
-    except NoData, exception:
-        logging.info(exception)
+    except ValueError:
+        logging.error("decoding Json has failed")
         sys.exit(3)
 
     #size of list
