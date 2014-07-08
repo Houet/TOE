@@ -6,7 +6,6 @@ import urllib
 import json
 import twitter
 import os
-import sys
 import logging
 import pytz
 import datetime
@@ -31,20 +30,9 @@ YEAR = {
     '12':'Dec',
     }
 
-URL_ARG = {
-    "orderby"     : "time",
-    "format"      : "json",
-    "longitude"   : "1.9",
-    "latitude"    : "46.6",
-    "limit"       : "30",
-    "maxradius"   : "8.0",
-    "starttime"   : (datetime.now()-timedelta(2)).strftime('%Y-%m-%dT00:00:00'),
-    "minmagnitude": "2.0",
-    }
 
 #timezone
 LOCAL = timezone("Europe/Paris")
-UTC = pytz.utc
 
 URL_BASE = "http://renass.unistra.fr/"
 URL_SEARCH = "fdsnws/event/1/query?"
@@ -55,25 +43,20 @@ class MissingValue(Exception):
     """ exception raises when a value is missing  """
 
 
-def get_env_var(varname, by_default=None):
+def get_env_var(varname, default=None):
     """ manage env var issue, help find missing values """
-    variablename = os.getenv(varname)
-    if not variablename and not by_default:
-        raise MissingValue("environment value not defined : %s" %varname)
-    elif not variablename:
-        logging.warning('no value for environment variable %s, \
-default = 2', varname)
-        ret = 2
-    else:
-        ret = variablename
+    value = os.getenv(varname, default)
 
-    return ret
+    if not value:
+        raise MissingValue("environment value not defined : %s" %varname)
+
+    return value
 
 
 def conversion(string):
     """ time readable by humans """
     utc_dt = datetime.strptime(string, '%Y-%m-%dT%H:%M:%S')
-    naive = UTC.localize(utc_dt)
+    naive = pytz.utc.localize(utc_dt)
     local_dt = naive.astimezone(LOCAL)
     string = local_dt.strftime('le %d %B %Y ') + u'à' + local_dt.strftime(' \
 %H:%M:%S heure locale')
@@ -106,10 +89,14 @@ def date_recovery(status, data, list_size, status_number):
 
     #webservice data recovery
     if len(event_id) > 15:
-        URL_ARG['eventid'] = event_id
-        url_id = URL_BASE + URL_SEARCH + urllib.urlencode(URL_ARG.items())
+        url_argv = {
+            'eventid' : event_id,
+            'format' : 'json',
+        }
 
-    #data to json
+        url_id = URL_BASE + URL_SEARCH + urllib.urlencode(url_argv.items())
+
+        #data to json
         try:
             have_json = json.loads(urllib.urlopen(url_id).read())
             urllib.urlopen(url_id).close()
@@ -193,10 +180,8 @@ def compare(time1, time2):
 
 def function_logging(arg_sys):
     """MODULE LOGGING"""
-    if len(arg_sys) == 2:
-        loglevel = str(arg_sys[1])
-    else:
-        loglevel = 'warning'
+
+    loglevel = arg_sys[0]
 
     numeric_level = getattr(logging, loglevel.upper(), None)
     if not isinstance(numeric_level, int):
@@ -244,22 +229,33 @@ def recup_old_event(status):
     return list_old_event
 
 
-def main(argv=None):
+def main(argv):
     """ fonction main """
-    if argv is None:
-        argv = sys.argv
 
     function_logging(argv)
 
     api = twitter.Api(**env())
 
+    url_arg = {
+        "orderby"     : "time",
+        "format"      : "json",
+        "longitude"   : "1.9",
+        "latitude"    : "46.6",
+        "limit"       : "30",
+        "maxradius"   : "8.0",
+        "starttime"   : (datetime.now()-timedelta(2)).strftime('\
+%Y-%m-%dT00:00:00'),
+        "minmagnitude": "2.0",
+    }
+
+
     last_day = (datetime.now() - timedelta(int(get_env_var('\
-NB_DAY', by_default=2)))).strftime('%Y-%m-%dT00:00:00')
+NB_DAY', default=2)))).strftime('%Y-%m-%dT00:00:00')
 
     # get env var, by default magnitude = 2 and dday = 2
-    URL_ARG['starttime'] = last_day
-    URL_ARG['minmagnitude'] = get_env_var('MAGNITUDE_MIN', by_default=2)
-    renass = URL_BASE + URL_SEARCH + urllib.urlencode(URL_ARG.items())
+    url_arg['starttime'] = last_day
+    url_arg['minmagnitude'] = get_env_var('MAGNITUDE_MIN', default=2)
+    renass = URL_BASE + URL_SEARCH + urllib.urlencode(url_arg.items())
 
 
     #webservice data recovery
@@ -324,4 +320,12 @@ Successful publication ! %s', tweet_data['description'])
 
 
 if __name__ == '__main__':
-    sys.exit(main())
+    import sys
+    import argparse
+
+    parser = argparse.ArgumentParser(description='Tweet earthquake')
+    parser.add_argument('level', metavar='lvl', type=str, nargs='+',
+help='logging level')
+
+    args = parser.parse_args()
+    sys.exit(main(args.level))
