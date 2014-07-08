@@ -181,7 +181,7 @@ def compare(time1, time2):
 def function_logging(arg_sys):
     """MODULE LOGGING"""
 
-    loglevel = arg_sys[0]
+    loglevel = arg_sys
 
     numeric_level = getattr(logging, loglevel.upper(), None)
     if not isinstance(numeric_level, int):
@@ -216,7 +216,7 @@ def env():
 def recup_old_event(status):
     """ list of tweet aleady published, url comparison """
 
-    #list of tweet aleady published, url comparison
+    #list of tweet already published, url comparison
     list_old_event = []
     for i in range(len(status)):
         decode_me = str(status[i])
@@ -229,7 +229,7 @@ def recup_old_event(status):
     return list_old_event
 
 
-def main(argv):
+def main(argv="warning"):
     """ fonction main """
 
     function_logging(argv)
@@ -324,8 +324,10 @@ if __name__ == '__main__':
     import argparse
 
     parser = argparse.ArgumentParser(description='Tweet earthquake')
-    parser.add_argument('level', metavar='lvl', type=str, nargs='+',
-help='logging level')
+    parser.add_argument('-l', metavar='lvl', help='logging level')
 
     args = parser.parse_args()
-    sys.exit(main(args.level))
+    if args.level:
+        sys.exit(main(argv=args.level))
+    else:
+        sys.exit(main())
