@@ -54,44 +54,24 @@ URL_FIND = "evenements/"
 class MissingValue(Exception):
     """ exception raises when a value is missing  """
 
-    def __init__(self, reason):
-        Exception.__init__(self, reason)
-        self.reason = reason
-
-
-class WrongValue(Exception):
-    """ exception raises when a value is wrong """
-
-    def __init__(self, reason):
-        Exception.__init__(self, reason)
-        self.reason = reason
-
 
 class NoData(Exception):
     """exception raises when no JSON object could be decoded """
 
-    def __init__(self, reason):
-        Exception.__init__(self, reason)
-        self.reason = reason
 
-
-def get_env_var(varname):
+def get_env_var(varname, by_default=None):
     """ manage env var issue, help find missing values """
     variablename = os.getenv(varname)
-    if not variablename:
+    if not variablename and not by_default:
         raise MissingValue("environment value not defined : %s" %varname)
+    elif not variablename:
+        logging.warning('no value for environment variable %s, \
+default = 2', varname)
+        ret = 2
     else:
-        return variablename
+        ret = variablename
 
-
-def get_status(twitter_api, number_of_tweet):
-    """ manage bad authentification with twitter """
-    try:
-        twitter_status = twitter_api.GetHomeTimeline(count=number_of_tweet)
-    except:
-        raise WrongValue("Wrong identification for twitter")
-
-    return twitter_status
+    return ret
 
 
 def get_json(text_to_convert):
@@ -101,17 +81,6 @@ def get_json(text_to_convert):
     else:
         text_to_json = json.loads(text_to_convert)
         return text_to_json
-
-
-def try_get(varname):
-    """ not choose yet """
-    try:
-        ret = get_env_var(varname)
-    except MissingValue:
-        logging.warning('no value for environment variable %s,\
- default = 2', varname)
-        ret = 2
-    return ret
 
 
 def conversion(string):
@@ -158,8 +127,8 @@ def date_recovery(status, data, list_size, status_number):
             have_json = get_json(urllib.urlopen(url_id).read())
             urllib.urlopen(url_id).close()
             timesignal = have_json['features'][0]['properties']['time']
-        except NoData:
-            logging.info(NoData)
+        except NoData, exception:
+            logging.info(exception)
             timesignal = event_id
 
 
@@ -257,8 +226,8 @@ def env():
         consumer_secret = get_env_var('CONSUMER_SECRET')
         acces_token_key = get_env_var('ACCES_TOKEN_KEY')
         acces_token_secret = get_env_var('ACCES_TOKEN_SECRET')
-    except MissingValue:
-        logging.error(MissingValue)
+    except MissingValue, exception:
+        logging.error(exception)
         sys.exit(1)
 
     #authentification
@@ -297,12 +266,12 @@ def main(argv=None):
 
     api = twitter.Api(**env())
 
-    last_day = (datetime.now() - timedelta(int(try_get('NB_DAY')))).strftime('\
-%Y-%m-%dT00:00:00')
+    last_day = (datetime.now() - timedelta(int(get_env_var('\
+NB_DAY', by_default=2)))).strftime('%Y-%m-%dT00:00:00')
 
     # get env var, by default magnitude = 2 and dday = 2
     URL_ARG['starttime'] = last_day
-    URL_ARG['minmagnitude'] = try_get('MAGNITUDE_MIN')
+    URL_ARG['minmagnitude'] = get_env_var('MAGNITUDE_MIN', by_default=2)
     renass = URL_BASE + URL_SEARCH + urllib.urlencode(URL_ARG.items())
 
 
@@ -313,8 +282,8 @@ def main(argv=None):
     try:
         text_json = get_json(sock.read())
         sock.close()
-    except NoData:
-        logging.info(NoData)
+    except NoData, exception:
+        logging.info(exception)
         sys.exit(3)
 
     #size of list
@@ -323,9 +292,9 @@ def main(argv=None):
 
     #tweet recovery , number of tweet we want to recover
     try:
-        statuses = get_status(api, 50)
-    except WrongValue:
-        logging.error(WrongValue)
+        statuses = api.GetHomeTimeline(count=50)
+    except twitter.TwitterError, exception:
+        logging.error(exception)
         sys.exit(2)
 
     #nb earthquake since last event published
@@ -333,7 +302,7 @@ def main(argv=None):
 
     #if possible :
     logging.info('Last event published: %s Number of event(s) \
-    since :%s', date, num_event)
+since :%s', date, num_event)
 
     new_tweet = 0
     tweet_data = {}
