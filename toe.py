@@ -41,6 +41,7 @@ URL_FIND = "evenements/"
 
 class MissingValue(Exception):
     """ exception raises when a value is missing  """
+    pass
 
 
 def get_env_var(varname, default=None):
@@ -74,50 +75,44 @@ def conv_time_twitter(string):
             month = key
     year = string[26:30]
     hour = string[11:19]
-    string = year + u'-' + month + u'-' + day + u'T' + hour
+    string = year + '-' + month + '-' + day + 'T' + hour
     return string
 
 
 def date_recovery(status, data, list_size, status_number):
     """ the last "readable" tweet, event date recovery """
-    dcod = str(status[status_number])
-    informer = dcod.find(URL_BASE + URL_FIND) + len(URL_BASE + URL_FIND)
-    event_id = ''
-    while dcod[informer] != '"':
-        event_id = event_id + dcod[informer]
-        informer += 1
+
+    try:
+        event_id = status[status_number].urls[0].expanded_url[36:60]
+    except IndexError:
+        return date_recovery(status, data, list_size, status_number + 1)
 
     #webservice data recovery
-    if len(event_id) > 15:
-        url_argv = {
-            'eventid' : event_id,
-            'format' : 'json',
-        }
+    url_argv = {
+        'eventid' : event_id,
+        'format' : 'json',
+    }
 
-        url_id = URL_BASE + URL_SEARCH + urllib.urlencode(url_argv.items())
+    url_id = URL_BASE + URL_SEARCH + urllib.urlencode(url_argv.items())
 
-        #data to json
-        try:
-            have_json = json.loads(urllib.urlopen(url_id).read())
-            urllib.urlopen(url_id).close()
-            timesignal = have_json['features'][0]['properties']['time']
-        except ValueError:
-            logging.info("decoding Json has failed")
-            timesignal = event_id
-
-
-    else:
+    #data to json
+    try:
+        have_json = json.loads(urllib.urlopen(url_id).read())
+        urllib.urlopen(url_id).close()
+        timesignal = have_json['features'][0]['properties']['time']
+    except ValueError:
+        logging.info("decoding Json has failed")
         timesignal = event_id
 
     #var to cover the list, possible= true if we find a "readable" tweet,
     # nb event since the last tweet "readable"
     num = 0
     possible = True
-    nb_event = 0
+    number_event = 0
 
     #look for the last tweet 's time to limit data recovery
     while data['features'][num]['properties']['time'] != timesignal:
-        nb_event += 1
+        number_event += 1
         if num < list_size - 1:
             num += 1
         else:
@@ -125,7 +120,7 @@ def date_recovery(status, data, list_size, status_number):
             break
 
     if possible:
-        response = nb_event, conversion(timesignal)
+        response = number_event, conversion(timesignal)
     else:
         if status_number + 1 < len(status):
             response = date_recovery(status, data, list_size, status_number + 1)
@@ -166,16 +161,15 @@ def default(status, data, size_of_list):
 
 def compare(time1, time2):
     """ compare two date, return bool (== <=> false)
-    date format type 2014-06-26T10:55:42"""
-    rep = None
+    date format type 2014-06-26T10:55:42
+    """
     times1 = datetime.strptime(time1, '%Y-%m-%dT%H:%M:%S')
     times2 = datetime.strptime(time2, '%Y-%m-%dT%H:%M:%S')
     duree = times1 - times2
     if duree.total_seconds() > 0:
-        rep = True
+        return True
     else:
-        rep = False
-    return rep
+        return False
 
 
 def function_logging(arg_sys):
@@ -214,18 +208,14 @@ def env():
 
 
 def recup_old_event(status):
-    """ list of tweet aleady published, url comparison """
+    """ list of url from tweet aleady published """
 
-    #list of tweet already published, url comparison
     list_old_event = []
     for i in range(len(status)):
-        decode_me = str(status[i])
-        indication = decode_me.find(URL_BASE)
-        link = ''
-        while decode_me[indication] != '"':
-            link = link + decode_me[indication]
-            indication += 1
-        list_old_event.append(link)
+        try:
+            list_old_event.append(status[i].urls[0].expanded_url)
+        except IndexError:
+            continue
     return list_old_event
 
 
@@ -257,7 +247,6 @@ NB_DAY', default=2)))).strftime('%Y-%m-%dT00:00:00')
     url_arg['minmagnitude'] = get_env_var('MAGNITUDE_MIN', default=2)
     renass = URL_BASE + URL_SEARCH + urllib.urlencode(url_arg.items())
 
-
     #webservice data recovery
     sock = urllib.urlopen(renass)
 
@@ -275,7 +264,7 @@ NB_DAY', default=2)))).strftime('%Y-%m-%dT00:00:00')
 
     #tweet recovery , number of tweet we want to recover
     try:
-        statuses = api.GetHomeTimeline(count=50)
+        statuses = api.GetHomeTimeline(count=150)
     except twitter.TwitterError, exception:
         logging.error(exception)
         sys.exit(2)
