@@ -132,7 +132,7 @@ def date_recovery(status, data, list_size, status_number):
 
 def default(status, data, size_of_list):
     """ recover the last tweet date,
-    even if its not a earthquake and recover all event from this date
+    even if its not a earthquake and recover all later event
     """
 
     logging.info("We didn't find the last earthquake published :\
