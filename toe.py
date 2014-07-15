@@ -14,29 +14,10 @@ from datetime import datetime, timedelta
 import locale
 locale.setlocale(locale.LC_TIME, '')
 
-
-YEAR = {
-    '01':'Jan',
-    '02':'Feb',
-    '03':'Mar',
-    '04':'Apr',
-    '05':'May',
-    '06':'Jun',
-    '07':'Jul',
-    '08':'Aug',
-    '09':'Sep',
-    '10':'Oct',
-    '11':'Nov',
-    '12':'Dec',
-    }
-
-
 #timezone
 LOCAL = timezone("Europe/Paris")
 
-URL_BASE = "http://renass.unistra.fr/"
-URL_SEARCH = "fdsnws/event/1/query?"
-URL_FIND = "evenements/"
+URL_SEARCH = "http://renass.unistra.fr/fdsnws/event/1/query?"
 
 
 class MissingValue(Exception):
@@ -59,134 +40,13 @@ def conversion(string):
     utc_dt = datetime.strptime(string, '%Y-%m-%dT%H:%M:%S')
     naive = pytz.utc.localize(utc_dt)
     local_dt = naive.astimezone(LOCAL)
-    string = local_dt.strftime('le %d %B %Y ') + u'à' + local_dt.strftime(' \
-%H:%M:%S heure locale')
+    string = local_dt.strftime('le %d %B %Y ') + u'à' + local_dt.strftime('%H:%M:%S heure locale')
     return string
 
 
-def conv_time_twitter(string):
-    """ change time format "twitter" to "normal" :
-        Thu Jun 26 07:40:58 +0000 2014 -> 2014-06-26T10:55:42
-    """
-    day = string[8:10]
-    for key, value  in YEAR.items():
-        nbchar = string.find(value)
-        if nbchar > 0:
-            month = key
-    year = string[26:30]
-    hour = string[11:19]
-    string = year + '-' + month + '-' + day + 'T' + hour
-    return string
+def GetApi():
+    """ get the api twitter """
 
-
-def date_recovery(status, data, list_size, status_number):
-    """ the last "readable" tweet, event date recovery """
-
-    try:
-        event_id = status[status_number].urls[0].expanded_url[36:60]
-    except IndexError:
-        return date_recovery(status, data, list_size, status_number + 1)
-
-    #webservice data recovery
-    url_argv = {
-        'eventid' : event_id,
-        'format' : 'json',
-    }
-
-    url_id = URL_BASE + URL_SEARCH + urllib.urlencode(url_argv.items())
-
-    #data to json
-    try:
-        have_json = json.loads(urllib.urlopen(url_id).read())
-        urllib.urlopen(url_id).close()
-        timesignal = have_json['features'][0]['properties']['time']
-    except ValueError:
-        logging.info("decoding Json has failed")
-        timesignal = event_id
-
-    #var to cover the list, possible= true if we find a "readable" tweet,
-    # nb event since the last tweet "readable"
-    num = 0
-    possible = True
-    number_event = 0
-
-    #look for the last tweet 's time to limit data recovery
-    while data['features'][num]['properties']['time'] != timesignal:
-        number_event += 1
-        if num < list_size - 1:
-            num += 1
-        else:
-            possible = False
-            break
-
-    if possible:
-        response = number_event, conversion(timesignal)
-    else:
-        if status_number + 1 < len(status):
-            response = date_recovery(status, data, list_size, status_number + 1)
-        else:
-            #default response, no "readable" tweet was found
-            response = default(status, data, list_size)
-    return response
-
-
-def default(status, data, size_of_list):
-    """ recover the last tweet date,
-    even if its not a earthquake and recover all later event
-    """
-
-    logging.info("We didn't find the last earthquake published :\
-    default recovery ")
-    tim_2_comp = conv_time_twitter(status[0].created_at)
-    response = 0, 'none'
-    #var to cover the list, possible= true if we find a "readable" tweet,
-    #nb event since the last tweet "readable"
-    loop_var = 0
-    possible = True
-    number_of_event = 0
-
-
-    #look for the last tweet 's time to limit data recovery
-    while compare(data['features'][loop_var]['properties']['time'], tim_2_comp):
-        number_of_event += 1
-        if loop_var < size_of_list-1:
-            loop_var += 1
-        else:
-            possible = False
-            break
-    if possible:
-        response = number_of_event, conversion(tim_2_comp)
-    return response
-
-
-def compare(time1, time2):
-    """ compare two date, return bool (== <=> false)
-    date format type 2014-06-26T10:55:42
-    """
-    times1 = datetime.strptime(time1, '%Y-%m-%dT%H:%M:%S')
-    times2 = datetime.strptime(time2, '%Y-%m-%dT%H:%M:%S')
-    duree = times1 - times2
-    if duree.total_seconds() > 0:
-        return True
-    else:
-        return False
-
-
-def function_logging(arg_sys):
-    """MODULE LOGGING"""
-
-    loglevel = arg_sys
-
-    numeric_level = getattr(logging, loglevel.upper(), None)
-    if not isinstance(numeric_level, int):
-        raise ValueError('Invalid log level: %s' % loglevel)
-    formatter = '%(asctime)s :: %(levelname)s :: %(message)s'
-    logging.basicConfig(level=numeric_level, format=formatter)
-    return
-
-
-def env():
-    """recuperation of environment variables """
     try:
         consumer_key = get_env_var('CONSUMER_KEY')
         consumer_secret = get_env_var('CONSUMER_SECRET')
@@ -204,27 +64,77 @@ def env():
         'access_token_key'   : acces_token_key,
         'access_token_secret': acces_token_secret,
     }
-    return key_dict
+
+    return twitter.Api(**key_dict)
 
 
-def recup_old_event(status):
-    """ list of url from tweet aleady published """
+def GetTwitterTimeline():
+    """ Get the twitter timeline """
 
-    list_old_event = []
-    for i in range(len(status)):
-        try:
-            list_old_event.append(status[i].urls[0].expanded_url)
-        except IndexError:
-            continue
-    return list_old_event
+    api = GetApi()
+
+    try:
+        Timeline = api.GetHomeTimeline(count=150)
+    except twitter.TwitterError, exception:
+        logging.error(exception)
+        sys.exit(2)
+
+    return Timeline
 
 
-def main(argv="warning"):
-    """ fonction main """
+def ReadJson(url):
+    """ recover data from webservice in format json """
+    print url
+    sock = urllib.urlopen(url)
+    try:
+        data_json = json.load(sock)
+        sock.close()
+    except ValueError:
+        logging.error("decoding Json has failed")
+        sys.exit(3)
 
-    function_logging(argv)
+    return data_json
 
-    api = twitter.Api(**env())
+
+def GetStartimeFromTwitter():
+    """ get the date of the last earthquake published """
+    twitter_timeline = GetTwitterTimeline()
+    list_url = [t.urls[0].expanded_url for t in twitter_timeline if t.urls]
+
+
+    url_argv = {
+        'eventid' : list_url[0].split('/')[-1],
+        'format' : 'json',
+    }
+
+    url_id = URL_SEARCH + urllib.urlencode(url_argv.items())
+    startime_twit = ReadJson(url_id)['features'][0]['properties']['time']
+    return startime_twit
+
+
+def GetStarttimeFromYesterday():
+    """get yesterday's date  """
+
+    yesterday = datetime.now() - timedelta(2)
+    return yesterday
+
+
+def GetMostRecentStartime():
+    """get the most recent startime """
+    date_yesterday = GetStarttimeFromYesterday()
+    date_twitter = datetime.strptime(GetStartimeFromTwitter(), '%Y-%m-%dT%H:%M:%S') + timedelta(0, 1)
+    print date_twitter
+    duree = date_yesterday - date_twitter
+    if duree.total_seconds() > 0:
+        return date_yesterday
+    else:
+        return date_twitter
+
+
+def GetDataToPublish():
+    """ get data to publish """
+    starttime = GetMostRecentStartime().strftime('%Y-%m-%dT%H:%M:%S')
+    print starttime
 
     url_arg = {
         "orderby"     : "time",
@@ -233,90 +143,56 @@ def main(argv="warning"):
         "latitude"    : "46.6",
         "limit"       : "30",
         "maxradius"   : "8.0",
-        "starttime"   : (datetime.now()-timedelta(2)).strftime('\
-%Y-%m-%dT00:00:00'),
+        "starttime"   : starttime,
         "minmagnitude": "2.0",
     }
 
+    webservice = URL_SEARCH + urllib.urlencode(url_arg.items())
+    data_recovered = ReadJson(webservice)
 
-    last_day = (datetime.now() - timedelta(int(get_env_var('\
-NB_DAY', default=2)))).strftime('%Y-%m-%dT00:00:00')
-
-    # get env var, by default magnitude = 2 and dday = 2
-    url_arg['starttime'] = last_day
-    url_arg['minmagnitude'] = get_env_var('MAGNITUDE_MIN', default=2)
-    renass = URL_BASE + URL_SEARCH + urllib.urlencode(url_arg.items())
-
-    #webservice data recovery
-    sock = urllib.urlopen(renass)
-
-    #data to json
-    try:
-        text_json = json.loads(sock.read())
-        sock.close()
-    except ValueError:
-        logging.error("decoding Json has failed")
-        sys.exit(3)
-
-    #size of list
-    size = len(text_json['features'])
+    return data_recovered
 
 
-    #tweet recovery , number of tweet we want to recover
-    try:
-        statuses = api.GetHomeTimeline(count=150)
-    except twitter.TwitterError, exception:
-        logging.error(exception)
-        sys.exit(2)
+def Publish():
+    """ publish data """
 
-    #nb earthquake since last event published
-    num_event, date = date_recovery(statuses, text_json, size, 0)
+    api = GetApi()
+    data = GetDataToPublish()
 
-    #if possible :
-    logging.info('Last event published: %s Number of event(s) \
-since :%s', date, num_event)
+    url = [u['properties']['url'] for u in data['features']]
+    time = [t['properties']['time'] for t in data['features']]
+    time = map(conversion, time)
+    description = [d['properties']['description'] for d in data['features']]
 
-    new_tweet = 0
-    tweet_data = {}
-    #tweet data + check if they are already published (compare url)
-    for i in range(size - num_event, size):
+    lat = [l['geometry']['coordinates'][1] for l in data['features']]
+    lon = [l['geometry']['coordinates'][0] for l in data['features']]
 
-        tweet_data['description'] = text_json['features'][size - 1 - i]['\
-properties']['description']
-        tweet_data['url'] = text_json['features'][size - 1 - i]['\
-properties']['url']
-        tweet_data['age'] = conversion(text_json['features'][size - 1 - i]['\
-properties']['time'])
-        tweet_data['lat'] = text_json['features'][size - 1 - i]['\
-geometry']['coordinates'][1]
-        tweet_data['lon'] = text_json['features'][size - 1 - i]['\
-geometry']['coordinates'][0]
+    message = zip(description, time, url, lat, lon)
+    message.reverse()
+    print message
 
-        if not tweet_data['url'] in recup_old_event(statuses):
-            try:
-                api.PostUpdate(tweet_data['description'] + "\n" + tweet_data['\
-age'] + "\n" + tweet_data['url'], latitude=tweet_data['\
-lat'], longitude=tweet_data['lon'])
-                logging.info('\
-Successful publication ! %s', tweet_data['description'])
-                logging.info('%s %s', tweet_data['age'], tweet_data['url'])
-                new_tweet += 1
-            except Warning:
-                logging.warning("twitter: information was already published !")
+    for mes in message:
+        try:
+            api.PostUpdate('\n'.join(mes[0:3]), latitude=mes[3], longitude=mes[4])
+        except twitter.TwitterError, exception:
+            logging.error(exception)
+            sys.exit(2)
 
-    if new_tweet >= 1:
-        logging.info('%s new tweet(s) were successfully published!!', new_tweet)
 
+def function_logging(arg_sys):
+    """MODULE LOGGING"""
+
+    loglevel = arg_sys
+
+    numeric_level = getattr(logging, loglevel.upper(), None)
+    if not isinstance(numeric_level, int):
+        raise ValueError('Invalid log level: %s' % loglevel)
+    formatter = '%(asctime)s :: %(levelname)s :: %(message)s'
+    logging.basicConfig(level=numeric_level, format=formatter)
+    return
 
 if __name__ == '__main__':
     import sys
     import argparse
 
-    parser = argparse.ArgumentParser(description='Tweet earthquake')
-    parser.add_argument('-l', metavar='lvl', help='logging level')
-
-    args = parser.parse_args()
-    if args.l:
-        sys.exit(main(argv=args.l))
-    else:
-        sys.exit(main())
+    Publish()
