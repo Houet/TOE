@@ -177,19 +177,7 @@ def Publish():
         except twitter.TwitterError, exception:
             logging.error(exception)
             sys.exit(2)
-
-
-def function_logging(arg_sys):
-    """MODULE LOGGING"""
-
-    loglevel = arg_sys
-
-    numeric_level = getattr(logging, loglevel.upper(), None)
-    if not isinstance(numeric_level, int):
-        raise ValueError('Invalid log level: %s' % loglevel)
-    formatter = '%(asctime)s :: %(levelname)s :: %(message)s'
-    logging.basicConfig(level=numeric_level, format=formatter)
-    return
+            
 
 if __name__ == '__main__':
     import sys
