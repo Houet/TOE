@@ -6,6 +6,7 @@ import urllib
 import json
 import twitter
 import os
+import sys
 import logging
 import pytz
 import time
@@ -85,13 +86,13 @@ def GetTwitterTimeline():
 
 def ReadJson(url):
     """ recover data from webservice in format json """
-    print url
+    logging.info(url)
     sock = urllib.urlopen(url)
     try:
         data_json = json.load(sock)
         sock.close()
     except ValueError:
-        logging.error("decoding Json has failed")
+        logging.warning("decoding Json has failed")
         sys.exit(3)
 
     return data_json
@@ -102,7 +103,7 @@ def GetStartimeFromTwitter():
     twitter_timeline = GetTwitterTimeline()
     list_url = [t.urls[0].expanded_url for t in twitter_timeline if t.urls]
     filtered_list = [u for u in list_url if URL_FILTER in u]
-
+    logging.debug('list of event: %s', filtered_list)
     try:
         url_argv = {
             'eventid': filtered_list[0].split('/')[-1],
@@ -114,6 +115,7 @@ def GetStartimeFromTwitter():
         return time.strftime('%Y-%m-%dT%H:%M:%S', date_post)
     else:
         url_id = URL_SEARCH + urllib.urlencode(url_argv.items())
+        logging.info('url of the last earthquake published :')
         startime_twit = ReadJson(url_id)['features'][0]['properties']['time']
         return startime_twit
 
@@ -129,7 +131,11 @@ def GetStarttimeFromYesterday():
 def GetMostRecentStartime():
     """get the most recent startime """
     date_yesterday = GetStarttimeFromYesterday()
+    logging.info('start time from user: %s', date_yesterday)
+
     date_twitter = datetime.strptime(GetStartimeFromTwitter(), '%Y-%m-%dT%H:%M:%S') + timedelta(0, 1)
+    logging.info('start time from twitter: %s', date_twitter)
+
     if date_yesterday > date_twitter:
         return date_yesterday
     else:
@@ -139,6 +145,7 @@ def GetMostRecentStartime():
 def GetDataToPublish():
     """ get data to publish """
     starttime = GetMostRecentStartime().strftime('%Y-%m-%dT%H:%M:%S')
+    logging.info("most recent start time : %s", starttime)
     minmagnitude = get_env_var("MAGNITUDE_MIN", 2)
 
     url_arg = {
@@ -153,6 +160,7 @@ def GetDataToPublish():
     }
 
     webservice = URL_SEARCH + urllib.urlencode(url_arg.items())
+    logging.info("url of data we recovered")
     data_recovered = ReadJson(webservice)
 
     return data_recovered
@@ -174,6 +182,7 @@ def Publish():
 
     message = zip(description, date, url, lat, lon)
     message.reverse()
+    logging.info("data to publish: %s", message)
 
     for mes in message:
         try:
@@ -183,8 +192,24 @@ def Publish():
             sys.exit(2)
 
 
-if __name__ == '__main__':
-    import sys
-    import argparse
+def function_logging(loglevel):
+    """ module logging """
 
+    numeric_level = getattr(logging, loglevel.upper(), None)
+    form = '%(levelname)s :: %(asctime)s :: %(message)s'
+    logging.basicConfig(filename="status_logging.txt", level=numeric_level, format=form)
+    return
+
+
+if __name__ == '__main__':
+
+    import argparse
+    parser = argparse.ArgumentParser(description="publish earthquake on twitter")
+
+    parser.add_argument("-l", "--loglevel", help="change the logging level", 
+        default="error", choices=['debug', 'info', 'warning', 'error'])
+    args = parser.parse_args()
+
+
+    function_logging(args.loglevel)
     Publish()
