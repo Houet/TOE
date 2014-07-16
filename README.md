@@ -30,6 +30,8 @@ then run in the appropriate directory :
 python toe.py 
 ```
 
+error and information could be found in status_logging.txt
+
 
 ### Working :
 
@@ -45,7 +47,7 @@ for a special reason (too deep in the history , bug, ... )
 it looks for the last tweet date and publishes later event.
 
 All earthquake published should respect a minimun magnitude and are not older 
-than 2 days when they are published. These parameters can be changed with 
+than one day when they are published. These parameters can be changed with 
 the MAGNITUDE_MIN and NB_DAY environment values.
 
 
@@ -70,7 +72,7 @@ Following environment variables are necessary :
 |-----------|--------------------------------------|
 |	  1     |  No environment value                |
 |	  2     |  Wrong environment value for twitter | 
-|	  3     |  No json could be decoded             |
+|	  3     |  No json could be decoded            |
 
 
 
