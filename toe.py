@@ -121,7 +121,8 @@ def GetStartimeFromTwitter():
 def GetStarttimeFromYesterday():
     """get yesterday's date  """
 
-    yesterday = datetime.now() - timedelta(1)
+    nb_day = get_env_var("NB_DAY", 1)
+    yesterday = datetime.now() - timedelta(nb_day)
     return yesterday
 
 
@@ -129,7 +130,6 @@ def GetMostRecentStartime():
     """get the most recent startime """
     date_yesterday = GetStarttimeFromYesterday()
     date_twitter = datetime.strptime(GetStartimeFromTwitter(), '%Y-%m-%dT%H:%M:%S') + timedelta(0, 1)
-    print date_twitter
     if date_yesterday > date_twitter:
         return date_yesterday
     else:
@@ -139,7 +139,7 @@ def GetMostRecentStartime():
 def GetDataToPublish():
     """ get data to publish """
     starttime = GetMostRecentStartime().strftime('%Y-%m-%dT%H:%M:%S')
-    print starttime
+    minmagnitude = get_env_var("MAGNITUDE_MIN", 2)
 
     url_arg = {
         "orderby"     : "time",
@@ -149,7 +149,7 @@ def GetDataToPublish():
         "limit"       : "30",
         "maxradius"   : "8.0",
         "starttime"   : starttime,
-        "minmagnitude": "2.0",
+        "minmagnitude": minmagnitude,
     }
 
     webservice = URL_SEARCH + urllib.urlencode(url_arg.items())
@@ -165,16 +165,15 @@ def Publish():
     data = GetDataToPublish()
 
     url = [u['properties']['url'] for u in data['features']]
-    time = [t['properties']['time'] for t in data['features']]
-    time = map(conversion, time)
+    date = [t['properties']['time'] for t in data['features']]
+    date = map(conversion, date)
     description = [d['properties']['description'] for d in data['features']]
 
     lat = [l['geometry']['coordinates'][1] for l in data['features']]
     lon = [l['geometry']['coordinates'][0] for l in data['features']]
 
-    message = zip(description, time, url, lat, lon)
+    message = zip(description, date, url, lat, lon)
     message.reverse()
-    print message
 
     for mes in message:
         try:
