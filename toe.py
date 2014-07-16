@@ -75,12 +75,12 @@ def GetTwitterTimeline():
     api = GetApi()
 
     try:
-        Timeline = api.GetHomeTimeline(count=150)
+        timeline = api.GetHomeTimeline(count=150)
     except twitter.TwitterError, exception:
         logging.error(exception)
         sys.exit(2)
 
-    return Timeline
+    return timeline
 
 
 def ReadJson(url):
@@ -121,7 +121,7 @@ def GetStartimeFromTwitter():
 def GetStarttimeFromYesterday():
     """get yesterday's date  """
 
-    nb_day = get_env_var("NB_DAY", 1)
+    nb_day = int(get_env_var("NB_DAY", 1))
     yesterday = datetime.now() - timedelta(nb_day)
     return yesterday
 
