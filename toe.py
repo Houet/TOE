@@ -8,6 +8,7 @@ import twitter
 import os
 import logging
 import pytz
+import time
 import datetime
 from pytz import timezone
 from datetime import datetime, timedelta
@@ -18,7 +19,7 @@ locale.setlocale(locale.LC_TIME, '')
 LOCAL = timezone("Europe/Paris")
 
 URL_SEARCH = "http://renass.unistra.fr/fdsnws/event/1/query?"
-
+URL_FILTER = "http://renass.unistra.fr/evenements"
 
 class MissingValue(Exception):
     """ exception raises when a value is missing  """
@@ -40,7 +41,7 @@ def conversion(string):
     utc_dt = datetime.strptime(string, '%Y-%m-%dT%H:%M:%S')
     naive = pytz.utc.localize(utc_dt)
     local_dt = naive.astimezone(LOCAL)
-    string = local_dt.strftime('le %d %B %Y ') + u'à' + local_dt.strftime('%H:%M:%S heure locale')
+    string = local_dt.strftime('le %d %B %Y ') + u'à' + local_dt.strftime(' %H:%M:%S heure locale')
     return string
 
 
@@ -100,22 +101,27 @@ def GetStartimeFromTwitter():
     """ get the date of the last earthquake published """
     twitter_timeline = GetTwitterTimeline()
     list_url = [t.urls[0].expanded_url for t in twitter_timeline if t.urls]
+    filtered_list = [u for u in list_url if URL_FILTER in u]
 
-
-    url_argv = {
-        'eventid' : list_url[0].split('/')[-1],
-        'format' : 'json',
-    }
-
-    url_id = URL_SEARCH + urllib.urlencode(url_argv.items())
-    startime_twit = ReadJson(url_id)['features'][0]['properties']['time']
-    return startime_twit
+    try:
+        url_argv = {
+            'eventid': filtered_list[0].split('/')[-1],
+            'format' : 'json',
+        }
+    except IndexError:
+        logging.info("no earthquake found on twitter")
+        date_post = time.gmtime(twitter_timeline[0].created_at_in_seconds)
+        return time.strftime('%Y-%m-%dT%H:%M:%S', date_post)
+    else:
+        url_id = URL_SEARCH + urllib.urlencode(url_argv.items())
+        startime_twit = ReadJson(url_id)['features'][0]['properties']['time']
+        return startime_twit
 
 
 def GetStarttimeFromYesterday():
     """get yesterday's date  """
 
-    yesterday = datetime.now() - timedelta(2)
+    yesterday = datetime.now() - timedelta(1)
     return yesterday
 
 
@@ -124,8 +130,7 @@ def GetMostRecentStartime():
     date_yesterday = GetStarttimeFromYesterday()
     date_twitter = datetime.strptime(GetStartimeFromTwitter(), '%Y-%m-%dT%H:%M:%S') + timedelta(0, 1)
     print date_twitter
-    duree = date_yesterday - date_twitter
-    if duree.total_seconds() > 0:
+    if date_yesterday > date_twitter:
         return date_yesterday
     else:
         return date_twitter
@@ -177,7 +182,7 @@ def Publish():
         except twitter.TwitterError, exception:
             logging.error(exception)
             sys.exit(2)
-            
+
 
 if __name__ == '__main__':
     import sys
