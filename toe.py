@@ -139,9 +139,8 @@ def get_data_to_publish(api):
 
     return data_recovered
 
-
-def publish(api):
-    """ publish data """
+def formatting(api):
+    """ preformating tweet in order to publish them """
 
     data = get_data_to_publish(api)
 
@@ -158,11 +157,17 @@ def publish(api):
     logging.info("data to publish: %s", message)
 
     for mes in message:
-        try:
-            api.PostUpdate('\n'.join(mes[0:3]), latitude=mes[3], longitude=mes[4])
-        except twitter.TwitterError, exception:
-            logging.error(exception)
-            sys.exit(2)
+        publish('\n'.join(mes[0:3]), mes[3], mes[4])
+
+
+def publish(tweet, latitude=None, longitude=None):
+    """ publish data """
+
+    try:
+        api.PostUpdate(tweet, latitude=latitude, longitude=longitude)
+    except twitter.TwitterError, exception:
+        logging.error(exception)
+        sys.exit(2)
 
 
 def function_logging(loglevel):
@@ -199,4 +204,4 @@ if __name__ == '__main__':
         sys.exit(1)
 
     api = twitter.Api(**key_dict)
-    publish(api)
+    formatting(api)
