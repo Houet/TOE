@@ -46,34 +46,8 @@ def conversion(string):
     return string
 
 
-def GetApi():
-    """ get the api twitter """
-
-    try:
-        consumer_key = get_env_var('CONSUMER_KEY')
-        consumer_secret = get_env_var('CONSUMER_SECRET')
-        acces_token_key = get_env_var('ACCES_TOKEN_KEY')
-        acces_token_secret = get_env_var('ACCES_TOKEN_SECRET')
-    except MissingValue, exception:
-        logging.error(exception)
-        sys.exit(1)
-
-    #authentification
-
-    key_dict = {
-        'consumer_key'       : consumer_key,
-        'consumer_secret'    : consumer_secret,
-        'access_token_key'   : acces_token_key,
-        'access_token_secret': acces_token_secret,
-    }
-
-    return twitter.Api(**key_dict)
-
-
-def GetTwitterTimeline():
+def get_twitter_timeline(api):
     """ Get the twitter timeline """
-
-    api = GetApi()
 
     try:
         timeline = api.GetHomeTimeline(count=150)
@@ -84,7 +58,7 @@ def GetTwitterTimeline():
     return timeline
 
 
-def ReadJson(url):
+def read_json(url):
     """ recover data from webservice in format json """
     logging.info(url)
     sock = urllib.urlopen(url)
@@ -98,9 +72,9 @@ def ReadJson(url):
     return data_json
 
 
-def GetStartimeFromTwitter():
+def get_startime_from_twitter(api):
     """ get the date of the last earthquake published """
-    twitter_timeline = GetTwitterTimeline()
+    twitter_timeline = get_twitter_timeline(api)
     list_url = [t.urls[0].expanded_url for t in twitter_timeline if t.urls]
     filtered_list = [u for u in list_url if URL_FILTER in u]
     logging.debug('list of event: %s', filtered_list)
@@ -116,11 +90,11 @@ def GetStartimeFromTwitter():
     else:
         url_id = URL_SEARCH + urllib.urlencode(url_argv.items())
         logging.info('url of the last earthquake published :')
-        startime_twit = ReadJson(url_id)['features'][0]['properties']['time']
+        startime_twit = read_json(url_id)['features'][0]['properties']['time']
         return startime_twit
 
 
-def GetStarttimeFromYesterday():
+def get_starttime_from_yesterday():
     """get yesterday's date  """
 
     nb_day = int(get_env_var("NB_DAY", 1))
@@ -128,12 +102,12 @@ def GetStarttimeFromYesterday():
     return yesterday
 
 
-def GetMostRecentStartime():
+def get_most_recent_starttime(api):
     """get the most recent startime """
-    date_yesterday = GetStarttimeFromYesterday()
+    date_yesterday = get_starttime_from_yesterday()
     logging.info('start time from user: %s', date_yesterday)
 
-    date_twitter = datetime.strptime(GetStartimeFromTwitter(), '%Y-%m-%dT%H:%M:%S') + timedelta(0, 1)
+    date_twitter = datetime.strptime(get_startime_from_twitter(api), '%Y-%m-%dT%H:%M:%S') + timedelta(0, 1)
     logging.info('start time from twitter: %s', date_twitter)
 
     if date_yesterday > date_twitter:
@@ -142,35 +116,34 @@ def GetMostRecentStartime():
         return date_twitter
 
 
-def GetDataToPublish():
+def get_data_to_publish(api):
     """ get data to publish """
-    starttime = GetMostRecentStartime().strftime('%Y-%m-%dT%H:%M:%S')
+    starttime = get_most_recent_starttime(api).strftime('%Y-%m-%dT%H:%M:%S')
     logging.info("most recent start time : %s", starttime)
     minmagnitude = get_env_var("MAGNITUDE_MIN", 2)
 
     url_arg = {
-        "orderby"     : "time",
-        "format"      : "json",
-        "longitude"   : "1.9",
-        "latitude"    : "46.6",
-        "limit"       : "30",
-        "maxradius"   : "8.0",
-        "starttime"   : starttime,
+        "orderby" : "time",
+        "format" : "json",
+        "longitude" : "1.9",
+        "latitude" : "46.6",
+        "limit" : "30",
+        "maxradius" : "8.0",
+        "starttime" : starttime,
         "minmagnitude": minmagnitude,
     }
 
     webservice = URL_SEARCH + urllib.urlencode(url_arg.items())
     logging.info("url of data we recovered")
-    data_recovered = ReadJson(webservice)
+    data_recovered = read_json(webservice)
 
     return data_recovered
 
 
-def Publish():
+def publish(api):
     """ publish data """
 
-    api = GetApi()
-    data = GetDataToPublish()
+    data = get_data_to_publish(api)
 
     url = [u['properties']['url'] for u in data['features']]
     date = [t['properties']['time'] for t in data['features']]
@@ -212,4 +185,18 @@ if __name__ == '__main__':
 
 
     function_logging(args.loglevel)
-    Publish()
+
+    #authentification
+    try:
+        key_dict = {
+            'consumer_key' : get_env_var('CONSUMER_KEY'),
+            'consumer_secret' : get_env_var('CONSUMER_SECRET'),
+            'access_token_key' : get_env_var('ACCES_TOKEN_KEY'),
+            'access_token_secret' : get_env_var('ACCES_TOKEN_SECRET'),
+        }
+    except MissingValue, exception:
+        logging.error(exception)
+        sys.exit(1)
+
+    api = twitter.Api(**key_dict)
+    publish(api)
