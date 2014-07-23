@@ -139,6 +139,7 @@ def get_data_to_publish(api):
 
     return data_recovered
 
+
 def formatting(api):
     """ preformating tweet in order to publish them """
 
@@ -161,7 +162,7 @@ def formatting(api):
 
 
 def publish(tweet, latitude=None, longitude=None):
-    """ publish data """
+    """ publish data on twitter"""
 
     try:
         api.PostUpdate(tweet, latitude=latitude, longitude=longitude)
