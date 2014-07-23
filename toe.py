@@ -81,7 +81,7 @@ def get_startime_from_twitter(api):
     try:
         url_argv = {
             'eventid': filtered_list[0].split('/')[-1],
-            'format' : 'json',
+            'format': 'json',
         }
     except IndexError:
         logging.info("no earthquake found on twitter")
@@ -123,13 +123,13 @@ def get_data_to_publish(api):
     minmagnitude = get_env_var("MAGNITUDE_MIN", 2)
 
     url_arg = {
-        "orderby" : "time",
-        "format" : "json",
-        "longitude" : "1.9",
-        "latitude" : "46.6",
-        "limit" : "30",
-        "maxradius" : "8.0",
-        "starttime" : starttime,
+        "orderby": "time",
+        "format": "json",
+        "longitude": "1.9",
+        "latitude": "46.6",
+        "limit": "30",
+        "maxradius": "8.0",
+        "starttime": starttime,
         "minmagnitude": minmagnitude,
     }
 
@@ -195,10 +195,10 @@ if __name__ == '__main__':
     #authentification
     try:
         key_dict = {
-            'consumer_key' : get_env_var('CONSUMER_KEY'),
-            'consumer_secret' : get_env_var('CONSUMER_SECRET'),
-            'access_token_key' : get_env_var('ACCES_TOKEN_KEY'),
-            'access_token_secret' : get_env_var('ACCES_TOKEN_SECRET'),
+            'consumer_key': get_env_var('CONSUMER_KEY'),
+            'consumer_secret': get_env_var('CONSUMER_SECRET'),
+            'access_token_key': get_env_var('ACCES_TOKEN_KEY'),
+            'access_token_secret': get_env_var('ACCES_TOKEN_SECRET'),
         }
     except MissingValue, exception:
         logging.error(exception)
