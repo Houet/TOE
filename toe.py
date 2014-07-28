@@ -1,5 +1,5 @@
 #!/usr/bin/env python
-# -*- coding: utf-8 -*-
+# -*- coding=utf-8 -*-
 """ read README.txt """
 
 import urllib
@@ -16,11 +16,12 @@ from datetime import datetime, timedelta
 import locale
 locale.setlocale(locale.LC_TIME, '')
 
-#timezone
+
 LOCAL = timezone("Europe/Paris")
 
 URL_SEARCH = "http://renass.unistra.fr/fdsnws/event/1/query?"
 URL_FILTER = "http://renass.unistra.fr/evenements"
+
 
 class MissingValue(Exception):
     """ exception raises when a value is missing  """
@@ -32,7 +33,7 @@ def get_env_var(varname, default=None):
     value = os.getenv(varname, default)
 
     if not value:
-        raise MissingValue("environment value not defined : %s" %varname)
+        raise MissingValue("environment value not defined : %s" % varname)
 
     return value
 
@@ -42,7 +43,8 @@ def conversion(string):
     utc_dt = datetime.strptime(string, '%Y-%m-%dT%H:%M:%S')
     naive = pytz.utc.localize(utc_dt)
     local_dt = naive.astimezone(LOCAL)
-    string = local_dt.strftime('le %d %B %Y ') + u'à' + local_dt.strftime(' %H:%M:%S heure locale')
+    string = local_dt.strftime('le %d %B %Y à %H:%M:%S heure locale')
+    string = string.decode('utf-8')
     return string
 
 
@@ -110,10 +112,7 @@ def get_most_recent_starttime(api):
     date_twitter = datetime.strptime(get_startime_from_twitter(api), '%Y-%m-%dT%H:%M:%S') + timedelta(0, 1)
     logging.info('start time from twitter: %s', date_twitter)
 
-    if date_yesterday > date_twitter:
-        return date_yesterday
-    else:
-        return date_twitter
+    return max(date_twitter, date_yesterday)
 
 
 def get_data_to_publish(api):
@@ -171,28 +170,22 @@ def publish(tweet, latitude=None, longitude=None):
         sys.exit(2)
 
 
-def function_logging(loglevel):
-    """ module logging """
-
-    numeric_level = getattr(logging, loglevel.upper(), None)
-    form = '%(levelname)s :: %(asctime)s :: %(message)s'
-    logging.basicConfig(filename="status_logging.txt", level=numeric_level, format=form)
-    return
-
-
 if __name__ == '__main__':
 
     import argparse
-    parser = argparse.ArgumentParser(description="publish earthquake on twitter")
+    parser = argparse.ArgumentParser(
+        description="publish earthquake on twitter")
 
-    parser.add_argument("-l", "--loglevel", help="change the logging level", 
-        default="error", choices=['debug', 'info', 'warning', 'error'])
+    parser.add_argument("-l", "--loglevel", help="change the logging level",
+                        default="error",
+                        choices=['debug', 'info', 'warning', 'error'])
     args = parser.parse_args()
 
+    numeric_level = getattr(logging, args.loglevel.upper(), None)
+    form = '%(levelname)s :: %(asctime)s :: %(message)s'
+    logging.basicConfig(level=numeric_level, format=form)
 
-    function_logging(args.loglevel)
-
-    #authentification
+    # authentification
     try:
         key_dict = {
             'consumer_key': get_env_var('CONSUMER_KEY'),
