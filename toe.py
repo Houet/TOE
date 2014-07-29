@@ -7,14 +7,10 @@ import json
 import os
 import sys
 import logging
-import time
 import pytz
 from twitter import Twitter, OAuth, TwitterError
 from pytz import timezone
 from datetime import datetime, timedelta
-import locale
-locale.setlocale(locale.LC_TIME, '')
-
 
 LOCAL = timezone("Europe/Paris")
 
