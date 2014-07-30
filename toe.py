@@ -36,11 +36,11 @@ class TweetEvent(object):
         self.lon = geojson["geometry"]["coordinates"][0]
 
     def __str__(self):
-        """ return a brief unicode text which describes the earthquake """
+        """ return a brief text which describes the earthquake """
         hashtag = ' '.join(self.hashtag)
-        unicode_tweet = '\n'.join([self.description + ' ' + self.date,
+        tweet = '\n'.join([self.description + ' ' + self.date,
                                    self.url, hashtag])
-        return unicode_tweet
+        return tweet
 
 
 def get_env_var(varname, default=None):
