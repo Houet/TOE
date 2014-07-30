@@ -8,7 +8,6 @@ import os
 import sys
 import logging
 import pytz
-import time
 from twitter import Twitter, OAuth, TwitterError
 from pytz import timezone
 from datetime import datetime, timedelta
@@ -76,7 +75,7 @@ def get_startime_from_twitter():
     return a date
     """
     try:
-        timeline = api.statuses.home_timeline(count=150)
+        timeline = api.statuses.home_timeline(count=1)
     except TwitterError as exception:
         logging.error(exception)
         sys.exit(2)
