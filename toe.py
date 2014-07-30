@@ -39,7 +39,7 @@ class TweetEvent(object):
         """ return a brief text which describes the earthquake """
         hashtag = ' '.join(self.hashtag)
         tweet = '\n'.join([self.description + ' ' + self.date,
-                                   self.url, hashtag])
+                           self.url, hashtag])
         return tweet
 
 
