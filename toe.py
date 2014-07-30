@@ -30,13 +30,16 @@ class TweetEvent():
         self.description = geojson["properties"]["description"]
         self.url = geojson["properties"]["url"]
         self.date = conversion(geojson["properties"]["time"])
+        self.hashtag = ['#renass', '#seisme']
 
         self.lat = geojson["geometry"]["coordinates"][1]
         self.lon = geojson["geometry"]["coordinates"][0]
 
     def unicode(self):
         """ return a brief unicode text which describe the earthquake """
-        unicode_tweet = ''.join([self.description, self.date, self.url])
+        hashtag = ' '.join(self.hashtag)
+        unicode_tweet = '\n'.join([self.description, self.date,
+                                   self.url, hashtag])
         return unicode_tweet
 
 
@@ -157,32 +160,6 @@ def get_data_to_publish():
     return data_recovered
 
 
-def formatting():
-    """ preformating tweet in order to publish them """
-
-    data = get_data_to_publish()
-
-    url = [u['properties']['url'] for u in data['features']]
-    date = [t['properties']['time'] for t in data['features']]
-    date = map(conversion, date)
-    description = [d['properties']['description'] for d in data['features']]
-
-    lat = [l['geometry']['coordinates'][1] for l in data['features']]
-    lon = [l['geometry']['coordinates'][0] for l in data['features']]
-
-    message = list(zip(description, date, url, lat, lon))
-    message.reverse()
-    logging.info("data to publish: %s", message)
-
-    for mes in message:
-        tweet = '\n'.join(mes[0:3])
-        try:
-            api.statuses.update(status=tweet, lat=mes[3], long=mes[4])
-        except TwitterError as exception:
-            logging.error(exception)
-            sys.exit(2)
-
-
 if __name__ == '__main__':
 
     import argparse
@@ -208,4 +185,15 @@ if __name__ == '__main__':
         logging.error(exception)
         sys.exit(1)
 
-    formatting()
+    data = get_data_to_publish()
+    data["features"].reverse()
+    logging.info("data to publish: %s", data["features"])
+
+    for feat in data["features"]:
+        try:
+            api.statuses.update(status=TweetEvent(feat).unicode(),
+                                lat=TweetEvent(feat).lat,
+                                long=TweetEvent(feat).lon)
+        except TwitterError as exception:
+            logging.error(exception)
+            sys.exit(2)
