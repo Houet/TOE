@@ -8,6 +8,7 @@ import os
 import sys
 import logging
 import pytz
+import time
 from twitter import Twitter, OAuth, TwitterError
 from pytz import timezone
 from datetime import datetime, timedelta
@@ -24,9 +25,9 @@ class MissingValue(Exception):
 
 
 class TweetEvent():
-    """ """
+    """ object which represent a earthquake """
     def __init__(self, geojson):
-        """ """
+        """ earthquake description """
         self.description = geojson["properties"]["description"]
         self.url = geojson["properties"]["url"]
         self.date = conversion(geojson["properties"]["time"])
@@ -35,8 +36,9 @@ class TweetEvent():
         self.lon = geojson["geometry"]["coordinates"][0]
 
     def unicode(self):
-        """ """
-        return
+        """ return a brief unicode text which describe the earthquake """
+        unicode_tweet = ''.join([self.description, self.date, self.url])
+        return unicode_tweet
 
 
 def get_env_var(varname, default=None):
@@ -54,43 +56,36 @@ def conversion(string):
     utc_dt = datetime.strptime(string, '%Y-%m-%dT%H:%M:%S')
     naive = pytz.utc.localize(utc_dt)
     local_dt = naive.astimezone(LOCAL)
-    string = local_dt.strftime('le %d %B %Y à %H:%M:%S heure locale')
+    string = local_dt.strftime('le %d/%m/%Y à %H:%M:%S heure locale')
     return string
 
 
-def get_twitter_timeline():
-    """ Get the twitter timeline """
+def read_json(url):
+    """ recover data from webservice in format json """
+    logging.info(url)
+    sock = urllib.request.urlopen(url)
+    sock = sock.read()
+    data_json = json.loads(bytes.decode(sock))
+    return data_json
 
+
+def get_startime_from_twitter():
+    """ connect to twitter home timeline
+    get the date of the last earthquake published
+    or the date of the last tweet published
+    return a date
+    """
     try:
         timeline = api.statuses.home_timeline(count=150)
     except TwitterError as exception:
         logging.error(exception)
         sys.exit(2)
 
-    return timeline
-
-
-def read_json(url):
-    """ recover data from webservice in format json """
-    logging.info(url)
-    try:
-        sock = urllib.request.urlopen(url)
-        sock = sock.read()
-    except urllib.error.HTTPError:
-        logging.warning("decoding Json has failed")
-        sys.exit(3)
-    else:
-        data_json = json.loads(bytes.decode(sock))
-        return data_json
-
-
-def get_startime_from_twitter():
-    """ get the date of the last earthquake published """
-    twitter_timeline = get_twitter_timeline()
     list_url = [t['entities']['urls'][0]['expanded_url'] for
-                t in twitter_timeline if t['entities']['urls']]
+                t in timeline if t['entities']['urls']]
     filtered_list = [u for u in list_url if URL_FILTER in u]
     logging.debug('list of event: %s', filtered_list)
+
     try:
         url_argv = {
             'eventid': filtered_list[0].split('/')[-1],
@@ -98,17 +93,25 @@ def get_startime_from_twitter():
         }
     except IndexError:
         logging.info("no earthquake found on twitter")
-        date_post = time.gmtime(twitter_timeline[0].created_at_in_seconds)
-        return time.strftime('%Y-%m-%dT%H:%M:%S', date_post)
-    else:
-        url_id = URL_SEARCH + urllib.parse.urlencode(url_argv)
-        logging.info('url of the last earthquake published :')
-        startime_twit = read_json(url_id)['features'][0]['properties']['time']
-        return startime_twit
+        date_post = datetime.strptime(timeline[0]['created_at'],
+                                      '%a %b %d %H:%M:%S +0000 %Y')
+        return date_post
+
+    url_id = URL_SEARCH + urllib.parse.urlencode(url_argv)
+    logging.info('url of the last earthquake published :')
+
+    try:
+        startime_twit = read_json(url_id)
+    except urllib.error.HTTPError:
+        logging.warning("invalid url")
+        sys.exit(3)
+    startime_twit = startime_twit['features'][0]['properties']['time']
+    startime_twit = datetime.strptime(startime_twit, '%Y-%m-%dT%H:%M:%S')
+    return startime_twit
 
 
 def get_starttime_from_yesterday():
-    """get yesterday's date  """
+    """return yesterday's date  """
 
     nb_day = int(get_env_var("NB_DAY", 1))
     yesterday = datetime.now() - timedelta(nb_day)
@@ -120,15 +123,14 @@ def get_most_recent_starttime():
     date_yesterday = get_starttime_from_yesterday()
     logging.info('start time from user: %s', date_yesterday)
 
-    date_twitter = datetime.strptime(get_startime_from_twitter(),
-                                     '%Y-%m-%dT%H:%M:%S') + timedelta(0, 1)
+    date_twitter = get_startime_from_twitter() + timedelta(0, 1)
     logging.info('start time from twitter: %s', date_twitter)
 
     return max(date_twitter, date_yesterday)
 
 
 def get_data_to_publish():
-    """ get data to publish """
+    """ return data to publish """
     starttime = get_most_recent_starttime().strftime('%Y-%m-%dT%H:%M:%S')
     logging.info("most recent start time : %s", starttime)
     minmagnitude = get_env_var("MAGNITUDE_MIN", 2)
@@ -146,7 +148,12 @@ def get_data_to_publish():
 
     webservice = URL_SEARCH + urllib.parse.urlencode(url_arg)
     logging.info("url of data we recovered")
-    data_recovered = read_json(webservice)
+
+    try:
+        data_recovered = read_json(webservice)
+    except urllib.error.HTTPError:
+        logging.warning("invalid url")
+        sys.exit(3)
 
     return data_recovered
 
@@ -169,18 +176,12 @@ def formatting():
     logging.info("data to publish: %s", message)
 
     for mes in message:
-        publish('\n'.join(mes[0:3]), mes[3], mes[4])
-
-
-def publish(tweet, latitude=None, longitude=None):
-    """ publish data on twitter"""
-
-    try:
-        api.statuses.update(status=tweet, lat=latitude,
-                            long=longitude)
-    except TwitterError as exception:
-        logging.error(exception)
-        sys.exit(2)
+        tweet = '\n'.join(mes[0:3])
+        try:
+            api.statuses.update(status=tweet, lat=mes[3], long=mes[4])
+        except TwitterError as exception:
+            logging.error(exception)
+            sys.exit(2)
 
 
 if __name__ == '__main__':
