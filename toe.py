@@ -23,22 +23,22 @@ class MissingValue(Exception):
     pass
 
 
-class TweetEvent():
+class TweetEvent(object):
     """ object which represent a earthquake """
     def __init__(self, geojson):
         """ earthquake description """
         self.description = geojson["properties"]["description"]
         self.url = geojson["properties"]["url"]
         self.date = conversion(geojson["properties"]["time"])
-        self.hashtag = ['#renass', '#seisme']
+        self.hashtag = ['#RéNaSS', '#séisme']
 
         self.lat = geojson["geometry"]["coordinates"][1]
         self.lon = geojson["geometry"]["coordinates"][0]
 
-    def unicode(self):
-        """ return a brief unicode text which describe the earthquake """
+    def __str__(self):
+        """ return a brief unicode text which describes the earthquake """
         hashtag = ' '.join(self.hashtag)
-        unicode_tweet = '\n'.join([self.description, self.date,
+        unicode_tweet = '\n'.join([self.description + ' ' + self.date,
                                    self.url, hashtag])
         return unicode_tweet
 
@@ -58,7 +58,7 @@ def conversion(string):
     utc_dt = datetime.strptime(string, '%Y-%m-%dT%H:%M:%S')
     naive = pytz.utc.localize(utc_dt)
     local_dt = naive.astimezone(LOCAL)
-    string = local_dt.strftime('le %d/%m/%Y à %H:%M:%S heure locale')
+    string = local_dt.strftime('le %d/%m/%Y à %Hh%M')
     return string
 
 
@@ -189,11 +189,11 @@ if __name__ == '__main__':
     data["features"].reverse()
     logging.info("data to publish: %s", data["features"])
 
-    for feat in data["features"]:
+    for features in data["features"]:
         try:
-            api.statuses.update(status=TweetEvent(feat).unicode(),
-                                lat=TweetEvent(feat).lat,
-                                long=TweetEvent(feat).lon)
+            api.statuses.update(status=TweetEvent(features),
+                                lat=TweetEvent(features).lat,
+                                long=TweetEvent(features).lon)
         except TwitterError as exception:
             logging.error(exception)
             sys.exit(2)
