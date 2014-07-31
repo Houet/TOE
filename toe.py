@@ -30,22 +30,21 @@ class TweetEvent(object):
         self.description = cut_text(geojson["properties"]["description"])
         self.url = geojson["properties"]["url"]
         self.date = conversion(geojson["properties"]["time"])
-        self.hashtag = ['#RéNaSS', '#séisme']
+        self.hashtag = ' #RéNaSS'
 
         self.lat = geojson["geometry"]["coordinates"][1]
         self.lon = geojson["geometry"]["coordinates"][0]
 
         self.mag = geojson["properties"]["mag"]
-        self.bcsf = "témoignez: http://www.franceseisme.fr/"
+        self.bcsf = "Témoigner: http://www.franceseisme.fr/"
 
     def __str__(self):
         """ return a brief text which describes the earthquake """
-        hashtag = ' '.join(self.hashtag)
-        tweet = '\n'.join([self.description + ' ' + self.date,
-                           self.url, hashtag])
-
+        tweet = ' '.join([self.date, str(self.mag) + 'ML',  self.description])
+        tweet = '\n'.join([tweet, self.url + self.hashtag])
         if self.mag > float(get_env_var("SEUIL_TEMOIGNAGE", 5.2)):
             tweet = '\n'.join([tweet, self.bcsf])
+
         return tweet
 
 
@@ -60,21 +59,22 @@ def get_env_var(varname, default=None):
 
 
 def cut_text(text):
-    """ replace séisme by #séisme and magnitude by mag
+    """ replace séisme by #séisme and cut magnitude
     in order to reduce the characteres 's numbers
     """
     text = text.split(' ')
-    text[0] = "#Séisme"
-    text[2] = "mag"
+    text = text[4:]
+    text.insert(0, "#Séisme")
     text = ' '.join(text)
     return text
+
 
 def conversion(string):
     """ time readable by humans """
     utc_dt = datetime.strptime(string, '%Y-%m-%dT%H:%M:%S')
     naive = pytz.utc.localize(utc_dt)
     local_dt = naive.astimezone(LOCAL)
-    string = local_dt.strftime('le %d/%m à %Hh%M')
+    string = local_dt.strftime('%d/%m %Hh%M:')
     return string
 
 
@@ -152,6 +152,8 @@ def get_data_to_publish():
     starttime = get_most_recent_starttime().strftime('%Y-%m-%dT%H:%M:%S')
     logging.info("most recent start time : %s", starttime)
     minmagnitude = get_env_var("MAGNITUDE_MIN", 2)
+    if float(minmagnitude) > float(get_env_var(SEUIL_TEMOIGNAGE, 5.2)):
+        logging.warning("SEUIL_TEMOIGNAGE < MAGNITUDE_MIN")
 
     url_arg = {
         "orderby": "time",
