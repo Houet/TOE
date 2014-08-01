@@ -25,12 +25,12 @@ class MissingValue(Exception):
 
 class TweetEvent(object):
     """ object which represent a earthquake """
-    def __init__(self, geojson):
+    def __init__(self, geojson, hashtag, formatchoose=0):
         """ earthquake description """
-        self.description = cut_text(geojson["properties"]["description"])
+        self.description = geojson["properties"]["description"]
         self.url = geojson["properties"]["url"]
         self.date = conversion(geojson["properties"]["time"])
-        self.hashtag = ' #RéNaSS'
+        self.hashtag = hashtag
 
         self.lat = geojson["geometry"]["coordinates"][1]
         self.lon = geojson["geometry"]["coordinates"][0]
@@ -38,10 +38,44 @@ class TweetEvent(object):
         self.mag = geojson["properties"]["mag"]
         self.bcsf = "Témoigner: http://www.franceseisme.fr/"
 
-    def __str__(self):
-        """ return a brief text which describes the earthquake """
+        self.formats = (self.format1, self.format2, self.format3,)
+        self.formatchoose = self.formats[formatchoose]()
+
+    def format1(self):
+        """ type:
+        30/07 15h20: 2.4ML #Séisme à 16km de Le Châtelard
+        http://renass.unistra.fr/evenements/53d8f16dd384a949cd6f2d6c … #RéNaSS
+        """
+        self.description = cut_text(self.description)
         tweet = ' '.join([self.date, str(self.mag) + 'ML',  self.description])
         tweet = '\n'.join([tweet, self.url + self.hashtag])
+        return tweet
+
+    def format2(self):
+        """ type:
+        #Séisme à 16km de Le Châtelard 2.4ML 30/07 15h20:
+        http://renass.unistra.fr/evenements/53d8f16dd384a949cd6f2d6c
+        #RéNaSS
+        """
+        self.description = cut_text(self.description)
+        tweet = ' '.join([self.description,  str(self.mag) + 'ML', self.date])
+        tweet = '\n'.join([tweet, self.url + self.hashtag])
+        return tweet
+
+    def format3(self):
+        """ type:
+        Séisme de magnitude 2.3 à 43km de Briançon 30/07 15h20:
+        http://renass.unistra.fr/evenements/53d8f16dd384a949cd6f2d6c
+        #RéNaSS
+        """
+        tweet = ' '.join([self.description, self.date])
+        tweet = '\n'.join([tweet, self.url, self.hashtag])
+        return tweet
+
+    def __str__(self):
+        """ return a brief text which describes the earthquake """
+
+        tweet = self.formatchoose
         if self.mag > float(get_env_var("SEUIL_TEMOIGNAGE", 5.2)):
             tweet = '\n'.join([tweet, self.bcsf])
 
@@ -152,7 +186,7 @@ def get_data_to_publish():
     starttime = get_most_recent_starttime().strftime('%Y-%m-%dT%H:%M:%S')
     logging.info("most recent start time : %s", starttime)
     minmagnitude = get_env_var("MAGNITUDE_MIN", 2)
-    if float(minmagnitude) > float(get_env_var(SEUIL_TEMOIGNAGE, 5.2)):
+    if float(minmagnitude) > float(get_env_var("SEUIL_TEMOIGNAGE", 5.2)):
         logging.warning("SEUIL_TEMOIGNAGE < MAGNITUDE_MIN")
 
     url_arg = {
@@ -187,6 +221,9 @@ if __name__ == '__main__':
     parser.add_argument("-l", "--loglevel", help="change the logging level",
                         default="error",
                         choices=['debug', 'info', 'warning', 'error'])
+    parser.add_argument("-f", "--format",
+                        help="change the format of the tweet",
+                        default='0', choices=['0', '1', '2'])
     args = parser.parse_args()
 
     numeric_level = getattr(logging, args.loglevel.upper(), None)
@@ -209,9 +246,10 @@ if __name__ == '__main__':
 
     for features in data["features"]:
         try:
-            api.statuses.update(status=TweetEvent(features),
-                                lat=TweetEvent(features).lat,
-                                long=TweetEvent(features).lon)
+            event = TweetEvent(features, ' #RéNaSS', int(args.format))
+            api.statuses.update(status=event,
+                                lat=event.lat,
+                                long=event.lon)
         except TwitterError as exception:
             logging.error(exception)
             sys.exit(2)
