@@ -64,7 +64,8 @@ the MAGNITUDE_MIN and NB_DAY environment values.
 
 It includes a environment value SEUIL_TEMOIGNAGE which changes the output tweet
 when magnitude is higher than this value with adding a encouragement to
-testifie
+testifie.
+Default value is 5.2 ML
 
 
 ### Necessary  :
