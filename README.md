@@ -17,20 +17,32 @@ http://renass.unistra.fr/ using the Twitter API
 **********************
 
 
-Add the two modules python-twitter and pytz :
+install with :
 
 ```
-sudo apt-get install python-twitter 
-sudo apt-get install pytz
+clone https://github.com/Houet/Toe.git
 ```
 
 then run in the appropriate directory :
 
 ```
-python toe.py 
+./toe.py 
 ```
 
-error and information could be found in status_logging.txt
+see help :
+```
+./toe.py -h
+```
+
+Change log level with adding "-l":
+```
+./toe.py -l debug
+```
+
+Change tweet format with adding "-f" and choose between 0, 1 or 2:
+```
+./toe.py -f 1
+```
 
 
 ### Working :
@@ -49,6 +61,10 @@ it looks for the last tweet date and publishes later event.
 All earthquake published should respect a minimun magnitude and are not older 
 than one day when they are published. These parameters can be changed with 
 the MAGNITUDE_MIN and NB_DAY environment values.
+
+It includes a environment value SEUIL_TEMOIGNAGE which changes the output tweet
+when magnitude is higher than this value with adding a encouragement to
+testifie
 
 
 ### Necessary  :
@@ -72,7 +88,7 @@ Following environment variables are necessary :
 |-----------|--------------------------------------|
 |	  1     |  No environment value                |
 |	  2     |  Wrong environment value for twitter | 
-|	  3     |  No json could be decoded            |
+|	  3     |  invalid url                         |
 
 
 
