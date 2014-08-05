@@ -88,7 +88,7 @@ Following environment variables are necessary :
 |-----------|--------------------------------------|
 |	  1     |  No environment value                |
 |	  2     |  Wrong environment value for twitter | 
-|	  3     |  invalid url                         |
+|	  3     |  Invalid url                         |
 
 
 
