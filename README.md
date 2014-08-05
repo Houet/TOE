@@ -12,24 +12,26 @@ http://renass.unistra.fr/ using the Twitter API
 
 
 
-### How to use it ?  :
+### How to use it ?
 
-**********************
+*******************
 
 
-install with :
+Install with:
 
 ```
-clone https://github.com/Houet/Toe.git
+git clone https://github.com/Houet/Toe.git
+sudo apt-get install pytz
+sudo apt-get install twitter
 ```
 
-then run in the appropriate directory :
+Then run in the appropriate directory:
 
 ```
 ./toe.py 
 ```
 
-see help :
+See help:
 ```
 ./toe.py -h
 ```
@@ -45,9 +47,9 @@ Change tweet format with adding "-f" and choose between 0, 1 or 2:
 ```
 
 
-### Working :
+### Working:
 
-*************
+************
 
 
 The programm looks for the last "good" tweet ,ie the last earthquake published, 
@@ -64,13 +66,12 @@ the MAGNITUDE_MIN and NB_DAY environment values.
 
 It includes a environment value SEUIL_TEMOIGNAGE which changes the output tweet
 when magnitude is higher than this value with adding a encouragement to
-testifie.
-Default value is 5.2 ML
+testifie. Default value is 5.2 ML.
 
 
-### Necessary  :
+### Necessary:
 
-****************
+**************
 
 
 Following environment variables are necessary :					
@@ -80,9 +81,9 @@ Following environment variables are necessary :
 * ACCES_TOKEN_KEY
 
 
-### Exit error :
+### Exit error:
  
-****************		 
+***************		 
  
 
 |	Code    |   		  Description			   |
