@@ -39,7 +39,7 @@ class TweetEvent(object):
         self.bcsf = "Témoigner: http://www.franceseisme.fr/"
 
         self.formats = (self.format1, self.format2, self.format3,)
-        self.formatchoose = self.formats[formatchoose]()
+        self.formatchoose = self.formats[formatchoose]
 
     def format1(self):
         """ type:
@@ -75,7 +75,7 @@ class TweetEvent(object):
     def __str__(self):
         """ return a brief text which describes the earthquake """
 
-        tweet = self.formatchoose
+        tweet = self.formatchoose()
         if self.mag > float(get_env_var("SEUIL_TEMOIGNAGE", 5.2)):
             tweet = '\n'.join([tweet, self.bcsf])
 
